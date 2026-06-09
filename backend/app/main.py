@@ -11,13 +11,17 @@ repo_root = Path(__file__).resolve().parents[2]
 if str(repo_root) not in sys.path:
     sys.path.insert(0, str(repo_root))
 
-# Try to import existing parsing helpers from the repo. Import errors are caught
-# and a basic fallback parser is used so the backend remains functional.
+# Try to import processor module from backend.app. Fall back to previous helpers if missing.
+processor = None
 try:
-    from telegram_to_text import format_message, build_id_index  # type: ignore
+    from backend.app import processor  # type: ignore
 except Exception:
-    format_message = None
-    build_id_index = None
+    processor = None
+    try:
+        from telegram_to_text import format_message, build_id_index  # type: ignore
+    except Exception:
+        format_message = None
+        build_id_index = None
 
 app = FastAPI(title="Telegram Export Parser Backend")
 
@@ -44,12 +48,21 @@ async def process(request: Request) -> Dict[str, Any]:
             upload = form.get("file")
             if upload is None:
                 raise HTTPException(status_code=400, detail="No file field in form data")
-            # UploadFile has async .read()
             contents = await upload.read()
             data = json.loads(contents.decode("utf-8"))
         else:
             data = await request.json()
 
+        # Prefer processor module if available
+        if processor:
+            try:
+                # processor supports payload processing; prefer in-memory payload
+                return processor.process_export_from_payload(data)
+            except Exception as e:
+                traceback.print_exc()
+                raise HTTPException(status_code=500, detail=str(e))
+
+        # Fallback: inline processing (kept for backwards compatibility)
         def iter_chats_from_data(obj: Any):
             if isinstance(obj, dict) and "messages" in obj:
                 yield obj

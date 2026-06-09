@@ -487,3 +487,16 @@ jobs:
 ---
 
 ✨ **نسخة:** 2.0.0
+
+## Backend processing
+
+Processing is provided by backend.app.processor which exposes two simple
+synchronous functions:
+
+- process_export_from_file(file_path): process a JSON export file and return a
+  structured result.
+- process_export_from_payload(payload): process an in-memory export payload.
+
+Functions are idempotent (they do not write files) and synchronous for the
+MVP. For very large exports prefer streaming (ijson) or dispatching work to a
+background worker (Celery/RQ) to avoid blocking the web worker.
