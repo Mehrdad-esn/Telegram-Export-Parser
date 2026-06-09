@@ -224,4 +224,4 @@ npm start
 
 ---
 
-✨ **نسخه:** 2.0.0
+## Backend (FastAPI)\n\nA new FastAPI backend was added under `./backend`. To run it locally:\n\n```bash\ncd backend\npython -m pip install -r requirements.txt\nuvicorn app.main:app --reload --host 0.0.0.0 --port 8000\n```\n\nTo build and run with Docker:\n\n```bash\ndocker build -t telegram-export-backend -f backend/Dockerfile backend\ndocker run -p 8000:8000 telegram-export-backend\n```\n\n✨ **نسخه:** 2.0.0
