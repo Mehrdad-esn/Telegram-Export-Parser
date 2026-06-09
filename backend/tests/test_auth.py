@@ -44,7 +44,6 @@ def test_signup_login_refresh():
     tokens = resp.json()
     assert "access_token" in tokens and "refresh_token" in tokens
     access = tokens["access_token"]
-    print("DEBUG tokens:", tokens)
 
     # Me
     headers = {"Authorization": f"Bearer {access}"}
