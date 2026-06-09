@@ -9,3 +9,4 @@ python-jose>=3.3.0
 python-multipart>=0.0.6
 pytest>=7.0.0
 httpx>=0.24.0
+stripe>=5.0.0

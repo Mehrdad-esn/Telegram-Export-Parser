@@ -132,6 +132,12 @@ except Exception as _e:
     print("Auth module not loaded:", _e)
 
 try:
+    from backend.app import billing as _billing
+    app.include_router(_billing.router)
+except Exception as _e:
+    print("Billing module not loaded:", _e)
+
+try:
     # Ensure models are imported and tables created
     from backend.app import models as _models
     from backend.app.db import Base as _Base, engine as _engine
