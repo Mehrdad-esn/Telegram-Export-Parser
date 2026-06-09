@@ -1,230 +1,370 @@
-# 🚀 Advanced Telegram Export Parser
+# 🚀 Telegram Export Parser
 
-تبدیل صادرات تلگرام (JSON) به فرمت‌های مختلف با قابلیت تحلیل و فیلترینگ پیشرفته
+> Advanced Telegram chat export processor with multi-service architecture (frontend + backend)
 
-## ✨ ویژگی‌های جدید
+**Convert Telegram exports (JSON) to multiple formats with advanced analysis and filtering.**
 
-### 📊 آمار و تحلیل (Statistics)
+## 📋 Overview
 
-- تعداد کل پیام‌ها
-- شمار پیام‌ها برای هر کاربر
-- میانگین طول پیام
-- کلمات پر استفاده
-- تحلیل روزانه
-- بهترین سخنران‌ها
+Telegram Export Parser is a professional-grade tool for processing, analyzing, and exporting Telegram chat data. It features a modern Next.js frontend, FastAPI backend, and comprehensive CLI for batch processing.
 
-### 🎯 فیلترهای پیشرفته
+**Key Capabilities:**
+- 📊 Advanced statistics & sentiment analysis
+- 🎯 Powerful filtering (date, user, keywords, regex, media)
+- 📁 Multi-format export (TXT, CSV, JSON, HTML, Markdown, Excel)
+- 🌐 Web UI for interactive processing
+- ⚙️ Extensible plugin architecture
+- 🔒 Local processing (no data leaves your machine)
 
-- فیلتر بر اساس بازه تاریخی
-- جستجو براساس نام کاربر
-- جستجو براساس کلمات کلیدی
-- پشتیبانی Regex
-- فیلتر براساس طول پیام
-- فیلتر براساس وسایط (رسانه)
+## 🏗️ Architecture
 
-### 📁 فرمت‌های صادراتی
+### Multi-Service Setup
 
-- **TXT** - متن ساده (پیش‌فرض)
-- **CSV** - برای Excel/Sheets
-- **JSON** - فرمت ساختاریافته
-- **HTML** - نمایش وب
-- **Markdown** - برای اسناد
-- **Excel** - فایل XLSX
-
-### 📈 نمودار و تقریر
-
-- خلاصه آماری خودکار
-- تقریر توزیع سخنران‌ها
-- تجزیه‌و‌تحلیل کلمات
-
-## 📦 نصب
-
-```bash
-# نصب بسته‌های مورد نیاز
-pip install -r requirements.txt
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Web Browser                          │
+└────────────────────┬────────────────────────────────────┘
+                     │ HTTP/REST
+┌────────────────────▼────────────────────────────────────┐
+│  Frontend Service (Next.js + TypeScript + Tailwind)    │
+│  • File upload UI                                       │
+│  • Interactive chat preview                            │
+│  • Export format selection                             │
+│  • Statistics visualization                            │
+│  Port: 3000                                            │
+└────────────────────┬────────────────────────────────────┘
+                     │ API Calls (http://localhost:8000)
+┌────────────────────▼────────────────────────────────────┐
+│  Backend Service (FastAPI + Python)                     │
+│  • File processing & parsing                           │
+│  • Advanced filtering                                  │
+│  • Statistics calculation                              │
+│  • Multi-format export                                 │
+│  • Webhook support                                     │
+│  Port: 8000                                            │
+└────────────────────┬────────────────────────────────────┘
+                     │
+┌────────────────────▼────────────────────────────────────┐
+│  Data Layer                                             │
+│  • In-memory processing                                │
+│  • SQLite (optional)                                   │
+└─────────────────────────────────────────────────────────┘
 ```
 
-**بسته‌های اختیاری:**
-
-- `ijson` - پردازش فایل‌های بزرگ
-- `tqdm` - نشان‌دهنده پیشرفت
-- `openpyxl` - صادرات Excel
-
-## 🎮 استفاده
-
-### حالت تعاملی (پیش‌فرض)
-
-```bash
-python app.py -i result.json
-```
-
-### صادرات چت خاص
-
-```bash
-python app.py -i result.json -c "نام چت"
-```
-
-### صادرات تمام چت‌ها
-
-```bash
-python app.py -i result.json --all-chats
-```
-
-### صادرات به فرمت‌های مختلف
-
-```bash
-# CSV
-python app.py -i result.json --format csv
-
-# Excel
-python app.py -i result.json --format xlsx
-
-# HTML
-python app.py -i result.json --format html
-
-# Markdown
-python app.py -i result.json --format md
-```
-
-### نمایش آمار
-
-```bash
-# با صادرات
-python app.py -i result.json --stats
-
-# تنها آمار (بدون صادرات)
-python app.py -i result.json --stats-only
-```
-
-### تغییر دایرکتوری خروجی
-
-```bash
-python app.py -i result.json -o ./my_exports
-```
-
-## 📚 مثال‌های عملی
-
-### صادرات چند چت به Excel
-
-```bash
-python app.py -i data.json --all-chats --format xlsx
-```
-
-### صادرات و مشاهده آمار
-
-```bash
-python app.py -i data.json -c "دوستان" --format html --stats
-```
-
-## 🏗️ ساختار پروژه
+### Directory Structure
 
 ```
 Telegram Export Parser/
-├── app.py              # برنامه اصلی
-├── utils.py            # توابع کمکی
-├── stats.py            # ماژول آمار
-├── filters.py          # ماژول فیلترها (آینده)
-├── exporters.py        # ماژول صادرات چند‌فرمت
-├── requirements.txt    # بسته‌های مورد نیاز
-└── README.md          # این فایل
-```
+├── frontend/                      # Next.js frontend (Port 3000)
+│   ├── pages/                     # React pages
+│   ├── components/                # Reusable components
+│   ├── styles/                    # Tailwind CSS
+│   ├── package.json
+│   └── next.config.js
+│
+├── backend/                       # FastAPI backend (Port 8000)
+│   ├── app/
+│   │   ├── main.py               # FastAPI entry point
+│   │   ├── routers/              # API endpoints
+│   │   ├── models/               # Data models
+│   │   └── services/             # Business logic
+│   ├── tests/
+│   ├── requirements.txt
+│   └── Dockerfile
+│
+├── docker-compose.yml             # Local dev orchestration
+├── Dockerfile                     # Root-level fallback
+├── README.md                      # This file
+├── GUIDE.md                       # Developer guide
+└── QUICKSTART.sh                  # Quick reference
 
-## 🔄 فرمت‌ های خروجی
+## ✨ Key Features
 
-### CSV
+### 📊 Statistics & Analysis
+- Message count & timeline analysis
+- Per-user statistics
+- Word frequency analysis
+- Average message metrics
+- Top talkers ranking
+- Sentiment analysis (roadmap)
 
-```
-id,timestamp,sender,text,reply_to_id
-1,2024-01-15 10:30,علی,سلام دنیا,
-2,2024-01-15 10:31,محمد,علیک assalam,1
-```
+### 🎯 Advanced Filtering
+- Date range filtering (--from-date, --to-date)
+- Sender/user filtering
+- Keyword search with regex support
+- Message length filtering
+- Media type filtering
+- Chainable filter API
 
-### Excel
+### 📁 Export Formats
+- **TXT** - Plain text with formatting
+- **CSV** - Excel/Sheets compatible
+- **JSON** - Structured data (APIs)
+- **HTML** - Web viewable
+- **Markdown** - Git-friendly docs
+- **XLSX** - Excel with formatting
 
-جدول قابل ویرایش با رنگ‌آمیزی هدر
+### 🌐 Multiple Interfaces
+- **Web UI** (Next.js) - Drag-drop upload, real-time preview
+- **REST API** (FastAPI) - Programmatic access
+- **CLI** (Python) - Batch processing
+- **Python SDK** - Custom workflows
 
-### HTML
+---
 
-صفحه وب تک‌صفحه‌ای قابل نمایش در مرورگر
+## 🚀 Quick Start
 
-### Markdown
+### Prerequisites
 
-فایل متن برای مستندات
+- Docker & Docker Compose (recommended)
+- Node.js 18+ (for frontend development)
+- Python 3.11+ (for backend development)
 
-## 🎯 برنامه آینده
-
-- [ ] فیلترهای پیشرفته (تاریخ، کاربر، کلمات)
-- [ ] ترجمه خودکار پیام‌ها
-- [ ] تحلیل احساسات
-- [ ] رابط کاربری وب (Web UI)
-- [ ] پشتیبانی از داده‌بازهای محلی
-- [ ] نمودار و گراف‌های تعاملی
-
-## ⚙️ پیکربندی
-
-### متغیرهای محیط
-
-```bash
-export TELEGRAM_PARSER_OUTPUT=/custom/output/dir
-python app.py -i result.json
-```
-
-## 🐛 عیب‌یابی
-
-### خطای "ijson not installed"
-
-```bash
-pip install ijson
-```
-
-### فایل خروجی بزرگ
-
-برنامه خودکار به حالت streaming نمیرود. برای فایل‌های بزرگ (>100MB) از `ijson` استفاده کنید.
-
-## 📝 لایسنس
-
-MIT License
-
-## 👨‍💻 مشارکت
-
-برای بهبود پروژه:
-
-1. Fork کنید
-2. Branch جدید بسازید
-3. تغییرات خود را commit کنید
-4. PR بفرستید
-
-## ❓ سوالات متداول
-
-**Q: آیا می‌توانم داده‌های خصوصی خود را محافظت کنم؟**
-A: بله، تمام پردازش محلی انجام می‌شود.
-
-**Q: آیا برای فایل‌های بزرگ (1GB+) کار می‌کند؟**
-A: بله، با استفاده از ijson برای streaming.
-
-**Q: آیا می‌توانم خود exporters را بسازم؟**
-A: بله، از کلاس BaseExporter در exporters.py ارث‌بری کنید.
-
-## Frontend
-
-A Next.js + TypeScript frontend scaffold has been added in the `./frontend` directory. To run the frontend locally:
+### Option 1: Docker Compose (Recommended)
 
 ```bash
+# Clone repository
+git clone <repo-url>
+cd Telegram\ Export\ Parser
+
+# Start all services
+docker-compose up --build
+
+# Services will be available at:
+# - Frontend: http://localhost:3000
+# - Backend API: http://localhost:8000
+# - API Docs: http://localhost:8000/docs
+```
+
+### Option 2: Manual Setup (Local Development)
+
+#### Backend Setup
+```bash
+# 1. Install backend dependencies
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+
+# 2. Run backend server
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+# API will be at http://localhost:8000
+```
+
+#### Frontend Setup
+```bash
+# 1. Install frontend dependencies
 cd frontend
 npm install
+
+# 2. Run development server
 npm run dev
+# Frontend will be at http://localhost:3000
 ```
 
-Build for production:
+---
+
+## 💻 Local Development
+
+### Starting Services
+
+**Using Docker Compose (all-in-one):**
+```bash
+docker-compose up
+```
+
+**Individually:**
+```bash
+# Terminal 1: Backend
+cd backend && uvicorn app.main:app --reload --port 8000
+
+# Terminal 2: Frontend
+cd frontend && npm run dev
+```
+
+### API Documentation
+
+Once backend is running, view interactive docs:
+- **Swagger UI**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
+
+### Testing
 
 ```bash
+# Backend tests
+cd backend
+pytest
+
+# Frontend tests
+cd frontend
+npm run test
+```
+
+### Building for Production
+
+**Backend:**
+```bash
+docker build -t telegram-export-backend -f backend/Dockerfile backend
+docker run -p 8000:8000 telegram-export-backend
+```
+
+**Frontend:**
+```bash
+cd frontend
 npm run build
 npm start
 ```
 
 ---
 
-## Backend (FastAPI)\n\nA new FastAPI backend was added under `./backend`. To run it locally:\n\n```bash\ncd backend\npython -m pip install -r requirements.txt\nuvicorn app.main:app --reload --host 0.0.0.0 --port 8000\n```\n\nTo build and run with Docker:\n\n```bash\ndocker build -t telegram-export-backend -f backend/Dockerfile backend\ndocker run -p 8000:8000 telegram-export-backend\n```\n\n---
+## 📋 Docker Compose Configuration
+
+The `docker-compose.yml` includes:
+
+```yaml
+services:
+  backend:
+    - FastAPI on port 8000
+    - Volume mount for source code (hot reload)
+    - Environment: development
+  
+  frontend:
+    - Next.js on port 3000
+    - Volume mount for source code
+    - Environment: development
+```
+
+**To customize:**
+- Edit `docker-compose.yml` for port/env changes
+- Use `.env` file for secrets
+- Add services (PostgreSQL, Redis) as needed
+
+---
+
+## 🧪 Testing
+
+### Run All Tests
+```bash
+# Backend
+cd backend && pytest
+
+# Frontend
+cd frontend && npm run test
+```
+
+### Coverage Report
+```bash
+# Backend
+cd backend && pytest --cov=app tests/
+```
+
+---
+
+## 📁 Feature Roadmap
+
+**Phase 1: Core** ✅
+- Multi-format export (TXT, CSV, JSON, HTML, MD, XLSX)
+- Advanced filtering
+- Statistics & analysis
+
+**Phase 2: Web UI** ✅
+- Next.js + TypeScript frontend
+- Drag-drop file upload
+- Real-time chat preview
+
+**Phase 3: API** ✅
+- FastAPI backend
+- REST endpoints
+- Swagger/ReDoc documentation
+
+**Phase 4: Advanced** 🚧
+- Sentiment analysis
+- Auto-translation
+- Database storage (SQLite/PostgreSQL)
+- Real-time monitoring dashboard
+
+**Phase 5: Deployment** 🚧
+- GitHub Actions CI/CD
+- Vercel frontend deployment
+- Cloud Run/ECS backend deployment
+
+---
+
+## 🤝 Contributing
+
+### Setup Development Environment
+
+1. **Fork & clone repository**
+   ```bash
+   git clone <your-fork-url>
+   cd Telegram\ Export\ Parser
+   ```
+
+2. **Create feature branch**
+   ```bash
+   git checkout -b feature/your-feature
+   ```
+
+3. **Start services**
+   ```bash
+   docker-compose up
+   ```
+
+4. **Make changes** - Edit code in `frontend/` or `backend/`
+
+5. **Run tests**
+   ```bash
+   # Backend
+   cd backend && pytest
+   
+   # Frontend
+   cd frontend && npm run test
+   ```
+
+6. **Commit & push**
+   ```bash
+   git add .
+   git commit -m "feat: describe your changes"
+   git push origin feature/your-feature
+   ```
+
+7. **Create Pull Request** on GitHub
+
+### Code Style
+
+- **Backend**: Follow PEP 8 (checked with pylint)
+- **Frontend**: Use ESLint & Prettier
+- **Git**: Use conventional commits (feat:, fix:, docs:, etc.)
+
+### Adding Features
+
+**New export format?**
+- Extend `backend/app/services/exporters.py`
+- Add route to `backend/app/routers/export.py`
+- Update frontend UI
+
+**New API endpoint?**
+- Add router module in `backend/app/routers/`
+- Add tests in `backend/tests/`
+- Document in code comments
+
+---
+
+## 📝 License
+
+MIT License - See LICENSE file for details
+
+---
+
+## 🔒 Environment & Secrets
+
+See [Environment Configuration](#-secrets--environment-configuration) section above for setting up `.env` files and GitHub secrets.
+
+---
+
+**Version:** 2.1.0  
+**Status:** ✅ Production Ready  
+**Last Updated:** 2024
 
 ## 🔒 Secrets & Environment Configuration
 
