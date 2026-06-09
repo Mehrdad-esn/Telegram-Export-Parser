@@ -47,4 +47,6 @@ USER app
 EXPOSE 8000
 
 # Default command (development override via docker-compose to enable --reload)
+# Note: the same image is used for the worker service; the worker command is
+# set in docker-compose.yml (e.g. `celery -A backend.worker:celery_app worker`).
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

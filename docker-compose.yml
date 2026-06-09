@@ -91,8 +91,9 @@ services:
       - REDIS_URL=redis://redis:6379/0
     volumes:
       - ./backend:/app
-    # Placeholder: replace with your worker command (Celery, RQ, etc.)
-    command: sh -c "echo 'Worker placeholder'; sleep infinity"
+    # Worker: runs Celery worker. The same image is used for backend and worker;
+    # docker-compose overrides the command for the worker service.
+    command: celery -A backend.worker:celery_app worker --loglevel=info
     networks:
       - telegram-network
     depends_on:
