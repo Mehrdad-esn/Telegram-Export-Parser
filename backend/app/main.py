@@ -122,3 +122,19 @@ async def process(request: Request) -> Dict[str, Any]:
     except Exception as exc:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(exc))
+
+
+# Include auth router and ensure database tables are created
+try:
+    from backend.app import auth as _auth_module
+    app.include_router(_auth_module.router)
+except Exception as _e:
+    print("Auth module not loaded:", _e)
+
+try:
+    # Ensure models are imported and tables created
+    from backend.app import models as _models
+    from backend.app.db import Base as _Base, engine as _engine
+    _Base.metadata.create_all(bind=_engine)
+except Exception as _e:
+    print("Could not create database tables:", _e)
