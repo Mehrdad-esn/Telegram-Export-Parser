@@ -27,10 +27,8 @@ def test_webhook_signature_valid(monkeypatch):
 def test_webhook_signature_invalid(monkeypatch):
     """When signature verification fails, webhook should return 400."""
 
-    from stripe.error import SignatureVerificationError
-
     def raise_sig(payload, sig_header, secret):
-        raise SignatureVerificationError("Invalid signature", sig_header)
+        raise Exception("Invalid signature")
 
     monkeypatch.setattr(stripe.Webhook, "construct_event", raise_sig)
 
