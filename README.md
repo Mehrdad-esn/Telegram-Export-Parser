@@ -205,6 +205,23 @@ A: بله، با استفاده از ijson برای streaming.
 **Q: آیا می‌توانم خود exporters را بسازم؟**
 A: بله، از کلاس BaseExporter در exporters.py ارث‌بری کنید.
 
+## Frontend
+
+A Next.js + TypeScript frontend scaffold has been added in the `./frontend` directory. To run the frontend locally:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Build for production:
+
+```bash
+npm run build
+npm start
+```
+
 ---
 
 ✨ **نسخه:** 2.0.0
