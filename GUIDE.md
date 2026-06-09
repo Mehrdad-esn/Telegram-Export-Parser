@@ -499,34 +499,313 @@ module.exports = {
 
 ## 📊 Monitoring & Observability
 
-### Sentry (Error Tracking)
+### Quick Setup
 
-```python
-# In backend/app/main.py
-import sentry_sdk
-sentry_sdk.init(
-    dsn=os.getenv('SENTRY_DSN'),
-    environment=os.getenv('ENVIRONMENT', 'development'),
-    traces_sample_rate=1.0
-)
+**1. Install Dependencies**
+```bash
+cd backend
+pip install -r requirements.txt
 ```
 
-### Logging
+**2. Configure Sentry (Optional but Recommended)**
+```bash
+# Get your Sentry DSN from https://sentry.io/
+export SENTRY_DSN="https://key@sentry.io/project-id"
+export ENV="production"  # or "development"
 
+# Start backend
+uvicorn app.main:app --reload
+```
+
+**3. Access Metrics**
+```bash
+# Health check
+curl http://localhost:8000/health
+
+# Prometheus metrics
+curl http://localhost:8000/metrics
+```
+
+### Sentry Integration (Error Tracking)
+
+**What it does:**
+- Captures and tracks exceptions/errors
+- Records performance metrics (10% sample rate in production)
+- Groups errors for trend analysis
+- Sends alerts for critical issues
+- Integrates with FastAPI middleware automatically
+
+**Setup Steps:**
+
+1. **Create Sentry Account**
+   - Go to https://sentry.io/signup/
+   - Create organization and project
+   - Select "Python → FastAPI" platform
+   - Copy your DSN
+
+2. **Add to Environment**
+   ```bash
+   # .env or deployment config
+   SENTRY_DSN=https://key@sentry.io/project-id
+   ENV=production
+   APP_VERSION=1.0.0  # optional
+   ```
+
+3. **Verify Integration**
+   ```bash
+   # Test endpoint to trigger an error
+   curl -X POST http://localhost:8000/api/process \
+     -H "Content-Type: application/json" \
+     -d '{"invalid": "data"}'
+   
+   # Check Sentry dashboard - error should appear within seconds
+   ```
+
+**Production Recommendations:**
+
+| Setting | Development | Production |
+|---------|-------------|-----------|
+| **Traces Sample Rate** | 100% | 10% |
+| **Profiles Sample Rate** | 0% | 10% |
+| **Environment** | `development` | `production` |
+| **Release** | Auto-detected | Set to semver (v1.2.3) |
+
+**Alerting Rules (configure in Sentry):**
+
+```
+Alert when:
+- Error rate > 5% in 5 minutes
+- New issue appears
+- Regression detected
+- Performance threshold exceeded
+
+Send to:
+- Email
+- Slack (integrate with #alerts channel)
+- PagerDuty (for critical issues)
+```
+
+**Dashboard Recommendations:**
+
+1. **Issues Dashboard**
+   - Sort by "First Seen"
+   - Filter by environment: `is:production`
+   - Track regression issues
+
+2. **Performance Dashboard**
+   - Monitor transaction throughput
+   - Check p95/p99 latencies
+   - Track slowest endpoints
+
+3. **Custom Alerts**
+   - High error rate (> 5%)
+   - Performance regression
+   - New issue types
+   - Critical exceptions (HTTP 500+)
+
+### Prometheus Metrics
+
+**Available Metrics:**
+
+| Metric | Type | Labels | Description |
+|--------|------|--------|-------------|
+| `http_requests_total` | Counter | method, endpoint, status | Total HTTP requests by endpoint |
+| `http_request_duration_seconds` | Histogram | method, endpoint, status | Request latency (0.01s to 10s buckets) |
+| `http_requests_in_progress` | Gauge | - | Active requests (concurrent) |
+| `exceptions_total` | Counter | exception_type | Total exceptions by type |
+| `chat_processing_total` | Counter | status | Chat processing ops (success/failure) |
+| `chat_processing_duration_seconds` | Histogram | status | Chat processing latency |
+
+**Expose Metrics:**
+
+```bash
+# Prometheus format endpoint
+curl http://localhost:8000/metrics
+
+# Example output:
+# TYPE http_requests_total counter
+# http_requests_total{method="POST",endpoint="/api/process",status="200"} 42
+# 
+# TYPE http_request_duration_seconds histogram
+# http_request_duration_seconds_bucket{method="GET",endpoint="/health",status="200",le="0.01"} 100
+```
+
+**Integration with Prometheus Server:**
+
+1. **Install Prometheus**
+   ```bash
+   # macOS
+   brew install prometheus
+   
+   # Linux/Docker
+   docker run -d -p 9090:9090 prom/prometheus
+   ```
+
+2. **Configure Prometheus** (`prometheus.yml`)
+   ```yaml
+   global:
+     scrape_interval: 15s
+     evaluation_interval: 15s
+
+   scrape_configs:
+     - job_name: 'telegram-parser-backend'
+       static_configs:
+         - targets: ['localhost:8000']
+       metrics_path: '/metrics'
+   ```
+
+3. **View Metrics Dashboard**
+   - Open http://localhost:9090
+   - Query examples:
+     ```
+     # Request rate (requests/sec)
+     rate(http_requests_total[5m])
+     
+     # Error rate
+     rate(http_requests_total{status=~"5.."}[5m])
+     
+     # P95 latency
+     histogram_quantile(0.95, http_request_duration_seconds)
+     
+     # Active requests
+     http_requests_in_progress
+     
+     # Chat processing success rate
+     rate(chat_processing_total{status="success"}[5m])
+     ```
+
+**Integration with Grafana:**
+
+1. **Install Grafana**
+   ```bash
+   docker run -d -p 3000:3000 grafana/grafana
+   ```
+
+2. **Add Prometheus Data Source**
+   - Login: admin/admin
+   - Configuration → Data Sources
+   - Add Prometheus (http://localhost:9090)
+
+3. **Create Dashboards**
+   - Import template or create custom
+   - Popular dashboards: FastAPI Monitoring (ID: 16589)
+
+**Production Deployment:**
+
+```docker
+# docker-compose.yml
+services:
+  backend:
+    image: telegram-export-backend
+    environment:
+      SENTRY_DSN: ${SENTRY_DSN}
+      ENV: production
+    ports:
+      - "8000:8000"
+  
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+  
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+```
+
+**Key Metrics to Monitor:**
+
+1. **System Health**
+   - Error rate (HTTP 5xx)
+   - Exception frequency
+   - Active request count
+
+2. **Performance**
+   - Request latency (p50, p95, p99)
+   - Chat processing duration
+   - Throughput (requests/sec)
+
+3. **Business Logic**
+   - Chat processing success rate
+   - Processing time trends
+   - Export format distribution
+
+**Alert Rules (Prometheus/Grafana):**
+
+```yaml
+# Alert when error rate > 5%
+- alert: HighErrorRate
+  expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+  for: 5m
+  annotations:
+    summary: "Error rate > 5%"
+
+# Alert when P95 latency > 1 second
+- alert: HighLatency
+  expr: histogram_quantile(0.95, http_request_duration_seconds) > 1
+  for: 5m
+
+# Alert when processing fails > 10% of time
+- alert: ProcessingFailures
+  expr: rate(chat_processing_total{status="failure"}[5m]) > 0.10
+  for: 5m
+```
+
+### Environment Variables
+
+```bash
+# Sentry
+SENTRY_DSN=https://key@sentry.io/project-id
+ENV=production  # development, staging, production
+APP_VERSION=1.0.0
+
+# Optional Sentry settings
+SENTRY_TRACES_SAMPLE_RATE=0.1  # 10% for production
+SENTRY_PROFILES_SAMPLE_RATE=0.1
+```
+
+### Monitoring Checklist
+
+- [ ] Sentry project created and DSN configured
+- [ ] `/metrics` endpoint accessible
+- [ ] Prometheus scraping metrics successfully
+- [ ] Grafana dashboards created
+- [ ] Alert rules configured (error rate, latency, failures)
+- [ ] Team notified of Sentry/Grafana URLs
+- [ ] Documentation updated with monitoring links
+- [ ] Log aggregation configured (optional)
+- [ ] On-call rotation setup
+- [ ] Incident response playbook created
+
+---
+
+## 🔧 Manual Monitoring (Without External Services)
+
+If you can't use Sentry/Prometheus externally:
+
+**Simple Logging:**
 ```python
-# Centralized logging in backend
+# backend/app/monitoring.py
 import logging
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-logger.info("Export started", extra={"chat_id": chat_id})
-logger.error("Export failed", exc_info=True)
+# In your code:
+logger.info("Processing export", extra={"chat_id": 123, "msg_count": 500})
+logger.error("Processing failed", exc_info=True)
 ```
 
-### Performance Monitoring
-
-- **Frontend**: Use Next.js Analytics
-- **Backend**: Use Cloud Run metrics dashboard
-- **Database**: Monitor with Cloud SQL/RDS console
+**Local Metrics File:**
+```python
+# Write metrics to disk for analysis
+with open('metrics.log', 'a') as f:
+    f.write(f"{time.time()},{method},{endpoint},{status},{duration}\n")
+```
 
 ---
 
