@@ -37,14 +37,33 @@ class MessageStats:
         for msg in self.messages:
             text = extract_plain_text(msg.get("text")).lower()
             # Simple word splitting (can be improved with NLTK)
-            words.extend(re.findall(r'\b\w+\b', text))
+            words.extend(re.findall(r"\b\w+\b", text))
 
         word_counts = Counter(words)
         # Filter common stop words
-        stop_words = {'و', 'در', 'به', 'که', 'این', 'است', 'را', 'از', 'برای',
-                      'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at'}
-        filtered = {w: c for w, c in word_counts.items()
-                    if w not in stop_words and len(w) > 2}
+        stop_words = {
+            "و",
+            "در",
+            "به",
+            "که",
+            "این",
+            "است",
+            "را",
+            "از",
+            "برای",
+            "the",
+            "a",
+            "an",
+            "and",
+            "or",
+            "but",
+            "in",
+            "on",
+            "at",
+        }
+        filtered = {
+            w: c for w, c in word_counts.items() if w not in stop_words and len(w) > 2
+        }
         return sorted(filtered.items(), key=lambda x: x[1], reverse=True)[:top_n]
 
     def get_daily_message_count(self) -> Dict[str, int]:
@@ -61,8 +80,9 @@ class MessageStats:
         """Get average message length in characters."""
         if not self.messages:
             return 0.0
-        total_length = sum(len(extract_plain_text(m.get("text")))
-                          for m in self.messages)
+        total_length = sum(
+            len(extract_plain_text(m.get("text"))) for m in self.messages
+        )
         return round(total_length / len(self.messages), 2)
 
     def get_top_talkers(self, top_n: int = 10) -> List[Tuple[str, int]]:
@@ -74,7 +94,9 @@ class MessageStats:
         """Print statistics summary using logging."""
         logger.info("\n📊 === CHAT STATISTICS ===")
         logger.info(f"Total messages: {self.get_total_messages()}")
-        logger.info(f"Average message length: {self.get_average_message_length()} chars")
+        logger.info(
+            f"Average message length: {self.get_average_message_length()} chars"
+        )
 
         top_talkers = self.get_top_talkers(5)
         logger.info("\n👥 Top 5 Talkers:")
@@ -90,7 +112,8 @@ class MessageStats:
         if daily_counts:
             avg_daily = sum(daily_counts.values()) / len(daily_counts)
             logger.info(f"\n📅 Messages per day: ~{avg_daily:.1f} (average)")
-            logger.info(f"  Date range: {min(daily_counts.keys())} to {max(daily_counts.keys())}")
+            logger.info(
+                f"  Date range: {min(daily_counts.keys())} to {max(daily_counts.keys())}"
+            )
 
         logger.info("")
-

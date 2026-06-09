@@ -10,12 +10,14 @@ from typing import Any, Dict, Iterable, Iterator, List, Optional
 
 try:
     import ijson  # type: ignore
+
     HAS_IJSON = True
 except Exception:
     HAS_IJSON = False
 
 try:
     from tqdm import tqdm  # type: ignore
+
     HAS_TQDM = True
 except Exception:
     HAS_TQDM = False
@@ -24,6 +26,7 @@ except Exception:
 # ----------------------------
 # Helper Functions
 # ----------------------------
+
 
 def slugify(value: str, default: str = "chat") -> str:
     value = value.strip().lower()
@@ -104,8 +107,9 @@ def extract_plain_text(text_field: Any) -> str:
 
 
 def extract_sender_name(message: Dict[str, Any]) -> str:
-    name = coerce_to_str(message.get("from") or message.get(
-        "actor") or message.get("author"))
+    name = coerce_to_str(
+        message.get("from") or message.get("actor") or message.get("author")
+    )
     return name if name else "Unknown"
 
 
@@ -117,9 +121,19 @@ def extract_reply_id(message: Dict[str, Any]) -> Optional[str]:
 
 
 def is_media_message(message: Dict[str, Any]) -> bool:
-    media_keys = {"photo", "video", "sticker", "file",
-                  "document", "audio", "voice", "animation", "media_type"}
+    media_keys = {
+        "photo",
+        "video",
+        "sticker",
+        "file",
+        "document",
+        "audio",
+        "voice",
+        "animation",
+        "media_type",
+    }
     return any(key in message and message.get(key) for key in media_keys)
+
 
 # ----------------------------
 # Core Formatter
@@ -159,6 +173,7 @@ def format_message(message: Dict[str, Any], id_index: Dict[str, Dict[str, Any]])
 # ----------------------------
 # Data Processing Engine
 # ----------------------------
+
 
 def iter_chats(json_path: Path) -> Iterator[Dict[str, Any]]:
     """هوشمندانه تشخیص می‌دهد فایل مربوط به کل اکانت است یا فقط یک چت"""
@@ -244,6 +259,7 @@ def list_chat_names(json_path: Path) -> List[str]:
         names.append(coerce_to_str(chat.get("name")) or "(unnamed chat)")
     return names
 
+
 # ----------------------------
 # CLI (Command Line Interface)
 # ----------------------------
@@ -251,14 +267,16 @@ def list_chat_names(json_path: Path) -> List[str]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Parse Telegram JSON to LLM-Friendly Plain Text.")
-    parser.add_argument("--input", "-i", default="result.json",
-                        help="Path to result.json")
+        description="Parse Telegram JSON to LLM-Friendly Plain Text."
+    )
     parser.add_argument(
-        "--outdir", "-o", default="telegram_output", help="Output directory")
+        "--input", "-i", default="result.json", help="Path to result.json"
+    )
+    parser.add_argument(
+        "--outdir", "-o", default="telegram_output", help="Output directory"
+    )
     parser.add_argument("--chat", "-c", default=None, help="Exact chat name")
-    parser.add_argument("--all-chats", action="store_true",
-                        help="Process all chats")
+    parser.add_argument("--all-chats", action="store_true", help="Process all chats")
     args = parser.parse_args()
 
     json_path = Path(args.input)

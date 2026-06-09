@@ -1,0 +1,31 @@
+# Virtual environments
+venv/
+.venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# VSCode
+.vscode/
+
+# IDE
+.idea/
+
+# Outputs
+telegram_output/
+examples_output/
+
+# Tests
+.pytest_cache/
+.coverage
+
+# System
+.DS_Store

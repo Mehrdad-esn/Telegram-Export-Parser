@@ -10,17 +10,25 @@ from typing import Any, Dict, Iterable, Iterator, List, Optional
 
 try:
     import ijson  # type: ignore
+
     HAS_IJSON = True
 except Exception:
     HAS_IJSON = False
 
 try:
     from tqdm import tqdm  # type: ignore
+
     HAS_TQDM = True
 except Exception:
     HAS_TQDM = False
 
-from utils import coerce_to_str, ensure_dir, unique_output_path, extract_plain_text, extract_sender_name
+from utils import (
+    coerce_to_str,
+    ensure_dir,
+    unique_output_path,
+    extract_plain_text,
+    extract_sender_name,
+)
 from stats import MessageStats
 from filters import MessageFilter
 from exporters import get_exporter
@@ -29,17 +37,19 @@ import logging
 import builtins
 
 # Configure logging for CLI
-logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
-logger = logging.getLogger('telegram_export_parser')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
+logger = logging.getLogger("telegram_export_parser")
+
 
 # Redirect prints to logger.info for consistent logging
 def _print_to_logger(*args, **kwargs):
-    sep = kwargs.get('sep', ' ')
-    end = kwargs.get('end', '\n')
+    sep = kwargs.get("sep", " ")
+    end = kwargs.get("end", "\n")
     msg = sep.join(map(str, args))
-    if end != '\n':
+    if end != "\n":
         msg += end
     logger.info(msg)
+
 
 builtins.print = _print_to_logger
 
@@ -47,6 +57,7 @@ builtins.print = _print_to_logger
 # ----------------------------
 # Core Data Processing
 # ----------------------------
+
 
 def iter_chats(json_path: Path) -> Iterator[Dict[str, Any]]:
     """Intelligently detect if file is full export or single chat."""
@@ -91,7 +102,9 @@ def build_id_index(messages: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
     return index
 
 
-def format_message_with_reply(message: Dict[str, Any], id_index: Dict[str, Dict[str, Any]]) -> str:
+def format_message_with_reply(
+    message: Dict[str, Any], id_index: Dict[str, Dict[str, Any]]
+) -> str:
     """Format message with reply context (plain text format)."""
     timestamp = message.get("date", "").replace("T", " ")
     sender = extract_sender_name(message)
@@ -114,8 +127,17 @@ def format_message_with_reply(message: Dict[str, Any], id_index: Dict[str, Dict[
 
             lines.append(f"↳ {parent_sender}: {parent_text}")
 
-    media_keys = {"photo", "video", "sticker", "file",
-                  "document", "audio", "voice", "animation", "media_type"}
+    media_keys = {
+        "photo",
+        "video",
+        "sticker",
+        "file",
+        "document",
+        "audio",
+        "voice",
+        "animation",
+        "media_type",
+    }
     has_media = any(key in message and message.get(key) for key in media_keys)
 
     if text:
@@ -137,6 +159,7 @@ def list_chat_names(json_path: Path) -> List[str]:
 # ----------------------------
 # Processing Functions
 # ----------------------------
+
 
 def process_chat(
     chat: Dict[str, Any],
@@ -164,7 +187,9 @@ def process_chat(
 
     # Export messages
     if export_format == "txt":
-        txt_path = unique_output_path(output_dir / f"{coerce_to_str(chat.get('name') or 'chat')}.txt")
+        txt_path = unique_output_path(
+            output_dir / f"{coerce_to_str(chat.get('name') or 'chat')}.txt"
+        )
 
         iterator: Iterable[Dict[str, Any]] = messages
         if HAS_TQDM and len(messages) >= 200:
@@ -185,11 +210,14 @@ def process_chat(
     else:
         # Use exporters module
         from utils import extract_timestamp
+
         exporter_class = get_exporter(export_format)
         exporter = exporter_class(chat.get("messages", []), id_index)
 
         file_ext = "xlsx" if export_format in ["excel", "xlsx"] else export_format
-        output_path = unique_output_path(output_dir / f"{coerce_to_str(chat.get('name') or 'chat')}.{file_ext}")
+        output_path = unique_output_path(
+            output_dir / f"{coerce_to_str(chat.get('name') or 'chat')}.{file_ext}"
+        )
 
         exporter.export(output_path)
         print(f"✅ Chat '{chat_name}' exported!")
@@ -206,6 +234,7 @@ def process_chat(
 # CLI
 # ----------------------------
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Advanced Telegram Export Parser - Extract & Analyze Chats",
@@ -218,24 +247,29 @@ Examples:
   python app.py -i result.json --format csv       # Export as CSV
   python app.py -i result.json --stats            # Show statistics
   python app.py -i result.json --stats-only       # Only show stats, no export
-        """
+        """,
     )
 
-    parser.add_argument("-i", "--input", default="result.json",
-                        help="Path to Telegram export JSON file")
-    parser.add_argument("-o", "--outdir", default="telegram_output",
-                        help="Output directory")
-    parser.add_argument("-c", "--chat", default=None,
-                        help="Exact chat name to export")
-    parser.add_argument("--all-chats", action="store_true",
-                        help="Export all chats")
-    parser.add_argument("--format", default="txt",
-                        choices=["txt", "csv", "json", "md", "html", "xlsx"],
-                        help="Export format (default: txt)")
-    parser.add_argument("--stats", action="store_true",
-                        help="Show statistics after export")
-    parser.add_argument("--stats-only", action="store_true",
-                        help="Show statistics without exporting")
+    parser.add_argument(
+        "-i", "--input", default="result.json", help="Path to Telegram export JSON file"
+    )
+    parser.add_argument(
+        "-o", "--outdir", default="telegram_output", help="Output directory"
+    )
+    parser.add_argument("-c", "--chat", default=None, help="Exact chat name to export")
+    parser.add_argument("--all-chats", action="store_true", help="Export all chats")
+    parser.add_argument(
+        "--format",
+        default="txt",
+        choices=["txt", "csv", "json", "md", "html", "xlsx"],
+        help="Export format (default: txt)",
+    )
+    parser.add_argument(
+        "--stats", action="store_true", help="Show statistics after export"
+    )
+    parser.add_argument(
+        "--stats-only", action="store_true", help="Show statistics without exporting"
+    )
 
     args = parser.parse_args()
 

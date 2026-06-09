@@ -92,8 +92,9 @@ def extract_plain_text(text_field: Any) -> str:
 
 def extract_sender_name(message: Dict[str, Any]) -> str:
     """Extract sender name from message."""
-    name = coerce_to_str(message.get("from") or message.get(
-        "actor") or message.get("author"))
+    name = coerce_to_str(
+        message.get("from") or message.get("actor") or message.get("author")
+    )
     return name if name else "Unknown"
 
 
@@ -107,8 +108,17 @@ def extract_reply_id(message: Dict[str, Any]) -> Optional[str]:
 
 def is_media_message(message: Dict[str, Any]) -> bool:
     """Check if message contains media."""
-    media_keys = {"photo", "video", "sticker", "file",
-                  "document", "audio", "voice", "animation", "media_type"}
+    media_keys = {
+        "photo",
+        "video",
+        "sticker",
+        "file",
+        "document",
+        "audio",
+        "voice",
+        "animation",
+        "media_type",
+    }
     return any(key in message and message.get(key) for key in media_keys)
 
 

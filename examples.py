@@ -97,9 +97,9 @@ def example_chained_filters():
 
     # Filter: messages from علی AND containing "سلام" AND after Jan 15
     msg_filter = MessageFilter(messages)
-    msg_filter.add_sender_filter(["علی"]) \
-              .add_keyword_filter(["سلام"]) \
-              .add_date_range(start_date="2024-01-15")
+    msg_filter.add_sender_filter(["علی"]).add_keyword_filter(["سلام"]).add_date_range(
+        start_date="2024-01-15"
+    )
 
     filtered = msg_filter.apply()
 
