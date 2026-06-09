@@ -1,7 +1,36 @@
 version: '3.8'
 
 services:
-  # FastAPI Backend Service
+  postgres:
+    image: postgres:15-alpine
+    container_name: telegram-export-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: telegram
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: telegram-export-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: ./backend
@@ -12,18 +41,24 @@ services:
     environment:
       - ENVIRONMENT=development
       - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/telegram
+      - REDIS_URL=redis://redis:6379/0
     volumes:
       - ./backend:/app
     command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
     networks:
       - telegram-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Next.js Frontend Service
   frontend:
     build:
       context: ./frontend
@@ -32,7 +67,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_API_URL=http://backend:8000
       - NODE_ENV=development
     volumes:
       - ./frontend:/app
@@ -44,13 +79,35 @@ services:
       backend:
         condition: service_healthy
 
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: telegram-export-worker
+    environment:
+      - ENVIRONMENT=development
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/telegram
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+    # Placeholder: replace with your worker command (Celery, RQ, etc.)
+    command: sh -c "echo 'Worker placeholder'; sleep infinity"
+    networks:
+      - telegram-network
+    depends_on:
+      - redis
+      - postgres
+
+volumes:
+  postgres_data:
+  redis_data:
+
 networks:
   telegram-network:
     driver: bridge
 
 # Usage:
-# docker-compose up                 # Start all services
-# docker-compose up --build         # Rebuild and start
-# docker-compose down               # Stop all services
-# docker-compose logs -f backend    # View backend logs
-# docker-compose logs -f frontend   # View frontend logs
+# docker-compose up -d --build    # Start all services in the background
+# docker-compose logs -f backend  # Tail backend logs
+# docker-compose down -v         # Stop and remove containers + volumes

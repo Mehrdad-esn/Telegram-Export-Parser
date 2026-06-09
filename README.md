@@ -122,19 +122,31 @@ Telegram Export Parser/
 
 ### Option 1: Docker Compose (Recommended)
 
+Start the full local stack (frontend, backend, Postgres, Redis, worker):
+
 ```bash
 # Clone repository
 git clone <repo-url>
 cd Telegram\ Export\ Parser
 
-# Start all services
-docker-compose up --build
+# Start (detached) and build images
+docker-compose up -d --build
 
-# Services will be available at:
-# - Frontend: http://localhost:3000
-# - Backend API: http://localhost:8000
-# - API Docs: http://localhost:8000/docs
+# Tail logs
+docker-compose logs -f backend
+docker-compose logs -f frontend
+
+# Stop and remove containers & volumes
+docker-compose down -v
 ```
+
+Services:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
+- PostgreSQL: localhost:5432
+- Redis: localhost:6379
+
+Use a `.env` file to override credentials (see .env.example).
 
 ### Option 2: Manual Setup (Local Development)
 
