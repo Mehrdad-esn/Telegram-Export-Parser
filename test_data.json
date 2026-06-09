@@ -1,0 +1,70 @@
+{
+  "about": "This is test export file",
+  "chats": {
+    "list": [
+      {
+        "name": "Test Chat",
+        "type": "private_chat",
+        "messages": [
+          {
+            "id": 1,
+            "type": "message",
+            "date": "2024-01-15T10:30:00",
+            "from": "علی",
+            "text": "سلام دنیا! این یک پیام تست است."
+          },
+          {
+            "id": 2,
+            "type": "message",
+            "date": "2024-01-15T10:31:00",
+            "from": "محمد",
+            "text": "سلام! چطور می‌تونم کمکت کنم؟",
+            "reply_to_message_id": 1
+          },
+          {
+            "id": 3,
+            "type": "message",
+            "date": "2024-01-15T10:32:00",
+            "from": "علی",
+            "text": "ممنون! فقط می‌خواستم تست کنم."
+          },
+          {
+            "id": 4,
+            "type": "message",
+            "date": "2024-01-16T14:15:00",
+            "from": "فاطمه",
+            "text": "سلام بچه‌ها!"
+          },
+          {
+            "id": 5,
+            "type": "message",
+            "date": "2024-01-16T14:16:00",
+            "from": "علی",
+            "text": "سلام فاطمه!"
+          }
+        ]
+      },
+      {
+        "name": "دوستان",
+        "type": "group_chat",
+        "messages": [
+          {
+            "id": 101,
+            "type": "message",
+            "date": "2024-01-14T08:00:00",
+            "from": "رضا",
+            "text": "صبح بخیر دوستان!"
+          },
+          {
+            "id": 102,
+            "type": "message",
+            "date": "2024-01-14T08:05:00",
+            "from": "علی",
+            "text": "صبح بخیر!",
+            "reply_to_message_id": 101
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "telegram-export-parser"
+version = "2.0.0"
+description = "Parse Telegram export JSON to multiple formats with filtering and stats"
+authors = [{name = "TeleExporter"}]
+requires-python = ">=3.8"
+dependencies = [
+  "ijson>=3.0.0",
+  "tqdm>=4.0.0",
+  "openpyxl>=3.0.0",
+  "flask>=2.0.0",
+]
+
+[project.scripts]
+telegram-export-parser = "app:main"
