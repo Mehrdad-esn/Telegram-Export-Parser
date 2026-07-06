@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "telegram-export-parser"
 version = "2.0.0"
 description = "Parse Telegram export JSON to multiple formats with filtering and stats"
-authors = [{name = "TeleExporter"}]
+authors = [{name = "Mehrdad-esn"}]
 requires-python = ">=3.8"
 dependencies = [
   "ijson>=3.0.0",

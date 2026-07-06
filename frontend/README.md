@@ -36,13 +36,8 @@ This directory contains the Next.js (TypeScript) frontend for the Telegram Expor
 
 ## 🔗 Backend Integration
 
-Next.js is configured with proxy rewrites (in `next.config.js`) to route `/api/:path*` requests directly to the FastAPI backend service at `http://localhost:8000/api/:path*`.
-- File upload endpoint: POST `/api/web/upload`
-- Stats endpoint: GET `/api/web/stats/{upload_id}/{chat_index}`
-- Export endpoint: POST `/api/web/export/{upload_id}`
-- Download endpoint: GET `/api/web/download/{upload_id}/{filename}`
+Next.js is configured with proxy rewrites (in `next.config.js`) to route `/api/:path*` and `/billing/:path*` requests directly to the FastAPI backend service at `http://localhost:8000`.
 
 ## 🧪 Linting & Testing
 
-- Run linter: `npm run lint` (using ESLint configured in `next.config.js`)
-- Run tests: `npm run test`
+- Run linter: `npm run lint` (using ESLint)

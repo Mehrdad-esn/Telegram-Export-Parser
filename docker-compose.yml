@@ -39,7 +39,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - ENVIRONMENT=development
+      - ENV=development
       - PYTHONUNBUFFERED=1
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/telegram
       - REDIS_URL=redis://redis:6379/0
@@ -85,7 +85,7 @@ services:
       dockerfile: Dockerfile
     container_name: telegram-export-worker
     environment:
-      - ENVIRONMENT=development
+      - ENV=development
       - PYTHONUNBUFFERED=1
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/telegram
       - REDIS_URL=redis://redis:6379/0

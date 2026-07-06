@@ -1,6 +1,6 @@
 # 🚀 Telegram Export Parser
 
-> Advanced Telegram chat export processor with multi-service SaaS-ready architecture (frontend + backend + worker)
+> Telegram chat export processor with multi-service architecture (frontend + backend + worker)
 
 **Convert Telegram exports (JSON) to multiple formats with advanced analysis, filtering, and visualization.**
 
@@ -8,14 +8,14 @@
 
 ## 📋 Overview
 
-Telegram Export Parser is a professional-grade tool for processing, analyzing, and exporting Telegram chat data. It features a modern, responsive Next.js frontend, a FastAPI backend with integrated JWT authentication and Stripe subscriptions, a background worker for parsing large payloads, and a robust CLI toolkit.
+Telegram Export Parser is a tool for processing, analyzing, and exporting Telegram chat data. It features a modern, responsive Next.js frontend, a FastAPI backend with integrated JWT authentication and Stripe subscriptions, a background worker for parsing large payloads, and a robust CLI toolkit.
 
 **Key Capabilities:**
 - 📊 **Interactive Analytics** - View message count trends, daily averages, character metrics, top talkers, and word frequencies.
 - 🎯 **Powerful Filtering** - Chainable filters by date, sender, keywords, regular expressions (Regex), message length, and media types.
 - 📁 **Multi-format Export** - Export processed chats to TXT, CSV, JSON, HTML, Markdown, and styled Excel (XLSX).
 - 🔒 **Security First** - In-memory local processing so your personal data never leaves the server.
-- 💳 **SaaS Ready** - Fully integrated with Stripe billing checkouts and webhook handlers.
+- 💳 **Stripe Integration** - Stripe billing checkouts and webhook handlers (free plans for now).
 - 📈 **System Monitoring** - Out-of-the-box Prometheus metrics (`/metrics`) and Sentry error tracking.
 - 🐳 **Dockerized Setup** - Run the entire multi-service stack with a single command.
 
@@ -49,7 +49,7 @@ Telegram Export Parser is a professional-grade tool for processing, analyzing, a
                      │ (Optional Redis Queue)
 ┌────────────────────▼────────────────────────────────────┐
 │  Worker & Data Layer                                    │
-│  • Celery/RQ workers for large files                    │
+│  • Celery workers for large files                       │
 │  • In-memory stream parser (ijson)                      │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -62,6 +62,7 @@ Telegram Export Parser/
 │   ├── pages/                     # Page views (dashboard, auth, pricing, index)
 │   ├── components/                # UI widgets & interactive graphs (Recharts)
 │   ├── styles/                    # Tailwind CSS configuration
+│   ├── Dockerfile                 # Frontend container definition
 │   └── package.json               # Node.js dependencies
 │
 ├── backend/                       # FastAPI backend (Port 8000)
@@ -72,17 +73,36 @@ Telegram Export Parser/
 │   │   ├── db.py & models.py      # SQLite database engine & user models
 │   │   ├── monitoring.py          # Sentry & Prometheus initializations
 │   │   ├── processor.py           # Core payload parser wrapper
-│   │   └── routers/               # Route definitions (e.g. web upload)
+│   │   ├── routers/               # Route definitions (e.g. web upload)
+│   │   └── tasks.py               # Background Celery tasks
 │   ├── tests/                     # Backend test suite (pytest)
+│   ├── worker.py                  # Celery worker configuration
 │   ├── requirements.txt           # Python backend dependencies
 │   └── Dockerfile                 # Backend container definition
 │
-├── docker-compose.yml             # Orchestration for frontend + backend + database
+├── templates/                     # Flask web UI template
+│   └── index.html
+├── .github/workflows/             # CI/CD pipeline
+├── docker-compose.yml             # Orchestration for 4 services
 ├── app.py                         # CLI tool core
-├── web_ui.py                      # Flask fallback web application (Port 5000)
-├── README.md                      # This file
-├── GUIDE.md                       # Developer & Deployment guide
-└── SUMMARY_FA.md                  # Persian project summary (گزارش پروژه)
+├── web_ui.py                      # Flask fallback web application
+├── config.py                      # Configuration management
+├── exporters.py                   # Multi-format export engines
+├── filters.py                     # Message filtering system
+├── stats.py                       # Statistics module
+├── utils.py                       # Helper utilities
+├── telegram_to_text.py            # Core parser
+├── examples.py                    # Usage examples
+├── test_data.json                 # Sample test data
+├── requirements.txt               # Root Python dependencies
+├── pyproject.toml                 # Package metadata
+├── Dockerfile                     # Legacy Flask container
+├── run.bat                        # Windows launcher (all services)
+├── run-backend.bat                # Windows backend runner
+├── run-frontend.bat               # Windows frontend runner
+├── .env.example                   # Environment variable template
+├── .pre-commit-config.yaml        # Pre-commit hooks config
+└── README.md                      # This file
 ```
 
 ---
@@ -193,15 +213,19 @@ cp .env.example .env
 ```
 
 | Variable | Description | Default |
-|---|---|---|
-| `DEBUG` | Enable debug logs | `True` |
-| `ENVIRONMENT` | Target environment name | `development` |
+|---|---|---|---|
 | `DATABASE_URL` | SQLAlchemy connection string | `sqlite:///./telegram_export.db` |
 | `SECRET_KEY` | JWT signing secret key | *Generate a strong key* |
-| `SENTRY_DSN` | Sentry exception DSN | *(Optional)* |
+| `STRIPE_API_KEY` | Stripe secret key | *(Optional)* |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret | *(Optional)* |
+| `SENTRY_DSN` | Sentry error tracking DSN | *(Optional)* |
+| `ENV` | Environment name (development/production) | `development` |
+| `APP_VERSION` | Release version for Sentry tracking | `unknown` |
+| `REDIS_URL` | Redis connection string for Celery | `redis://localhost:6379/0` |
+| `FRONTEND_URL` | Frontend URL for redirects | `http://localhost:3000` |
 
 ---
 
-**Version:** 2.1.0  
-**Status:** ✅ Production Ready  
+**Version:** 2.0.0  
+**Status:** ✅ Development / Learning Project  
 **Last Updated:** June 2026  
