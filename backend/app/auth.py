@@ -5,15 +5,16 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from sqlalchemy.orm import Session
 
 from config import Config
 from backend.app.db import get_db
 from backend.app.models import User
+from backend.app.subscription import get_usage_summary, PLANS
 
 config = Config()
 SECRET_KEY = os.getenv("SECRET_KEY", config.get_secret_key())
@@ -23,6 +24,7 @@ REFRESH_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
 
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login")
+optional_bearer = HTTPBearer(auto_error=False)
 
 router = APIRouter(prefix="/api", tags=["auth"])
 
@@ -36,9 +38,19 @@ class UserOut(BaseModel):
     id: int
     email: EmailStr
     is_active: bool
+    plan: str = "free"
+    subscription_status: Optional[str] = None
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserProfile(BaseModel):
+    id: int
+    email: EmailStr
+    plan: str
+    subscription_status: Optional[str] = None
+    usage: dict
+    plans: dict
 
 
 class Token(BaseModel):
@@ -109,6 +121,58 @@ def create_refresh_token(subject: str, expires_delta: Optional[timedelta] = None
     return _create_token(subject, expires_delta if expires_delta is not None else timedelta(minutes=REFRESH_TOKEN_EXPIRE_MINUTES))
 
 
+class GuestUser:
+    def __init__(self):
+        self.id = 0
+        self.email = "guest@example.com"
+        self.is_active = True
+        self.is_superuser = False
+        self.plan = "free"
+        self.subscription_status = "active"
+        self.uploads_this_month = 0
+        self.exports_this_month = 0
+        self.last_usage_reset = None
+
+
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/api/login", auto_error=False)
+
+
+def get_current_user_or_guest(
+    token: Optional[str] = Depends(oauth2_scheme_optional),
+    db: Session = Depends(get_db)
+):
+    if not token:
+        return GuestUser()
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            return GuestUser()
+    except JWTError:
+        return GuestUser()
+    user = get_user_by_email(db, email)
+    if not user:
+        return GuestUser()
+    return user
+
+
+def get_current_user_optional(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_bearer),
+    db: Session = Depends(get_db),
+) -> Optional[User]:
+    if credentials is None:
+        return None
+    try:
+        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            return None
+        return get_user_by_email(db, email)
+    except JWTError:
+        return None
+
+
+
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -167,3 +231,15 @@ def refresh(payload: dict, db: Session = Depends(get_db)):
 @router.get("/me", response_model=UserOut)
 def read_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+
+@router.get("/profile", response_model=UserProfile)
+def read_profile(current_user: User = Depends(get_current_user)):
+    return UserProfile(
+        id=current_user.id,
+        email=current_user.email,
+        plan=current_user.plan or "free",
+        subscription_status=current_user.subscription_status,
+        usage=get_usage_summary(current_user),
+        plans={k: {"name": v["name"], "name_en": v["name_en"], "price_monthly": v["price_monthly"]} for k, v in PLANS.items()},
+    )

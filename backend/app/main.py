@@ -13,11 +13,8 @@ if str(repo_root) not in sys.path:
     sys.path.insert(0, str(repo_root))
 
 # Initialize monitoring (Sentry and Prometheus)
-try:
-    from backend.app import monitoring
-    monitoring.init_sentry()
-except Exception as e:
-    print(f"Monitoring initialization warning: {e}")
+from backend.app import monitoring
+monitoring.init_sentry()
 
 # Try to import processor module from backend.app. Fall back to previous helpers if missing.
 processor = None
@@ -31,7 +28,17 @@ except Exception:
         format_message = None
         build_id_index = None
 
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI(title="Telegram Export Parser Backend")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/health")
@@ -58,6 +65,8 @@ def metrics():
 @app.middleware("http")
 async def monitoring_middleware(request: Request, call_next):
     """Middleware to record HTTP request metrics."""
+    if monitoring is None:
+        return await call_next(request)
     try:
         monitoring.increment_in_progress()
         start_time = time.time()
@@ -117,12 +126,14 @@ async def process(request: Request) -> Dict[str, Any]:
                 # processor supports payload processing; prefer in-memory payload
                 result = processor.process_export_from_payload(data)
                 duration = time.time() - start_time
-                monitoring.record_chat_processing(success=True, duration=duration)
+                if monitoring:
+                    monitoring.record_chat_processing(success=True, duration=duration)
                 return result
             except Exception as e:
                 duration = time.time() - start_time
-                monitoring.record_chat_processing(success=False, duration=duration)
-                monitoring.record_exception(type(e).__name__)
+                if monitoring:
+                    monitoring.record_chat_processing(success=False, duration=duration)
+                    monitoring.record_exception(type(e).__name__)
                 traceback.print_exc()
                 raise HTTPException(status_code=500, detail=str(e))
 
@@ -181,17 +192,20 @@ async def process(request: Request) -> Dict[str, Any]:
 
         result = {"processed": True, "chats": result_chats}
         duration = time.time() - start_time
-        monitoring.record_chat_processing(success=True, duration=duration)
+        if monitoring:
+            monitoring.record_chat_processing(success=True, duration=duration)
         return result
 
     except json.JSONDecodeError:
         duration = time.time() - start_time
-        monitoring.record_chat_processing(success=False, duration=duration)
+        if monitoring:
+            monitoring.record_chat_processing(success=False, duration=duration)
         raise HTTPException(status_code=400, detail="Invalid JSON payload")
     except Exception as exc:
         duration = time.time() - start_time
-        monitoring.record_chat_processing(success=False, duration=duration)
-        monitoring.record_exception(type(exc).__name__)
+        if monitoring:
+            monitoring.record_chat_processing(success=False, duration=duration)
+            monitoring.record_exception(type(exc).__name__)
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(exc))
 
@@ -210,9 +224,15 @@ except Exception as _e:
     print("Billing module not loaded:", _e)
 
 try:
-    # Ensure models are imported and tables created
     from backend.app import models as _models
-    from backend.app.db import Base as _Base, engine as _engine
+    from backend.app.db import Base as _Base, engine as _engine, migrate_schema
+    migrate_schema()
     _Base.metadata.create_all(bind=_engine)
 except Exception as _e:
     print("Could not create database tables:", _e)
+
+try:
+    from backend.app.routers import upload as _upload
+    app.include_router(_upload.router)
+except Exception as _e:
+    print("Upload router not loaded:", _e)

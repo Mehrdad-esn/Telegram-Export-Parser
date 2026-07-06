@@ -21,14 +21,12 @@ repo_root = Path(__file__).resolve().parents[2]
 if str(repo_root) not in sys.path:
     sys.path.insert(0, str(repo_root))
 
-# Try to import core helpers from telegram_to_text. If unavailable, provide
-# small fallback implementations so the backend remains functional.
+# Try to import core helpers from telegram_to_text.
 try:
     from telegram_to_text import iter_chats, build_id_index, format_message  # type: ignore
 except Exception:
-    iter_chats = None  # type: ignore
-    build_id_index = None  # type: ignore
-    format_message = None  # type: ignore
+    # Fallback implementations
+    from utils import coerce_to_str, extract_plain_text, extract_sender_name
 
     def iter_chats(json_path: Path):
         with json_path.open("r", encoding="utf-8") as f:
@@ -49,12 +47,8 @@ except Exception:
 
     def format_message(message: Dict[str, Any], id_index: Dict[str, Dict[str, Any]]) -> str:
         ts = message.get("date", "").replace("T", " ")
-        sender = message.get("from") or message.get("actor") or message.get("author") or "Unknown"
-        text_field = message.get("text")
-        if isinstance(text_field, str):
-            text = text_field
-        else:
-            text = json.dumps(text_field, ensure_ascii=False) if text_field is not None else ""
+        sender = extract_sender_name(message)
+        text = extract_plain_text(message.get("text"))
         return f"[{ts}] {sender}\n{text}"
 
 

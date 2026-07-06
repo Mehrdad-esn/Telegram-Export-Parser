@@ -1,34 +1,8 @@
-import os
-import pathlib
-
-# Ensure test database and secret are set before importing the app
-# Use in-memory SQLite to avoid file lock issues in CI/test environments
-os.environ["DATABASE_URL"] = "sqlite:///:memory:"
-os.environ.setdefault("SECRET_KEY", "test-secret-key")
-
 from fastapi.testclient import TestClient
 
 from backend.app.main import app
 
 client = TestClient(app)
-
-
-def setup_function():
-    db_path = pathlib.Path("backend/test_auth.db")
-    try:
-        if db_path.exists():
-            db_path.unlink()
-    except Exception:
-        pass
-
-
-def teardown_function():
-    db_path = pathlib.Path("backend/test_auth.db")
-    try:
-        if db_path.exists():
-            db_path.unlink()
-    except Exception:
-        pass
 
 
 def test_signup_login_refresh():

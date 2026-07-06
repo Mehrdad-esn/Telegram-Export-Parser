@@ -182,33 +182,34 @@ def export_data():
         exporter.export(temp_path)
 
         # Record generated files to avoid arbitrary file downloads
-        uploaded_data.setdefault("temp_files", []).append(str(temp_path))
+        file_id = temp_path.name
+        uploaded_data.setdefault("temp_files", {})[file_id] = str(temp_path)
 
         return jsonify(
-            {"success": True, "file": str(temp_path), "format": export_format}
+            {"success": True, "file": file_id, "format": export_format}
         )
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/api/download/<path:filename>", methods=["GET"])
-def download_file(filename: str):
+@app.route("/api/download/<file_id>", methods=["GET"])
+def download_file(file_id: str):
     """Download exported file."""
     try:
-        allowed = uploaded_data.get("temp_files", [])
-        requested = str(Path(filename))
-        if requested not in allowed:
+        temp_files = uploaded_data.get("temp_files", {})
+        file_path_str = temp_files.get(file_id)
+        if not file_path_str:
             return jsonify({"error": "Unauthorized or unknown file"}), 403
 
-        file_path = Path(requested)
+        file_path = Path(file_path_str)
         if not file_path.exists():
             return jsonify({"error": "File not found"}), 404
 
         return send_file(
             file_path,
             as_attachment=True,
-            download_name=f"telegram_export{file_path.suffix}",
+            download_name=file_path.name,
         )
     except Exception as e:
         logger.exception("Error in download_file")

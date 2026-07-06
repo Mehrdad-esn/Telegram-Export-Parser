@@ -62,6 +62,15 @@ class Config:
         """Get default export format."""
         return self.get("default_export_format", "txt")
 
+    def get_database_url(self) -> str:
+        """Get database URL configuration."""
+        return self.get("database_url", "sqlite:///./telegram_export.db")
+
+    def get_secret_key(self) -> str:
+        """Get secret key configuration."""
+        import secrets
+        return self.get("secret_key", secrets.token_urlsafe(32))
+
     def __str__(self) -> str:
         """String representation."""
         return json.dumps(self.config, indent=2, ensure_ascii=False)

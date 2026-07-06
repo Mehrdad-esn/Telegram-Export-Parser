@@ -1,70 +1,51 @@
-"""Stripe billing endpoints for creating Checkout Sessions and handling webhooks.
-
-Uses STRIPE_API_KEY and STRIPE_WEBHOOK_SECRET from environment.
-"""
+"""Stripe billing endpoints for creating Checkout Sessions and handling webhooks."""
 
 import os
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, Depends
 from fastapi.responses import JSONResponse
+from sqlalchemy.orm import Session
+
+from backend.app.db import get_db
+from backend.app.models import User
+from backend.app.auth import get_current_user
 
 try:
     import stripe
-except Exception:  # pragma: no cover - stripe must be installed in production/tests
+except Exception:
     stripe = None
 
 router = APIRouter(prefix="/billing", tags=["billing"])
 
 STRIPE_API_KEY = os.getenv("STRIPE_API_KEY")
-STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
 if stripe:
     stripe.api_key = STRIPE_API_KEY
 
 
 @router.post("/create-checkout-session")
-async def create_checkout_session(request: Request):
-    """Create a Stripe Checkout Session for a subscription price.
-
-    JSON body: {"price_id": "price_xxx", "success_url": "http://...", "cancel_url": "http://..."}
-    """
-    if stripe is None:
-        raise HTTPException(status_code=500, detail="Stripe library not available")
-
+async def create_checkout_session(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     try:
         payload = await request.json()
     except Exception:
         payload = {}
 
-    price_id = payload.get("price_id") or os.getenv("STRIPE_DEFAULT_PRICE_ID")
-    success_url = payload.get("success_url") or os.getenv("FRONTEND_SUCCESS_URL", "http://localhost:3000/success")
-    cancel_url = payload.get("cancel_url") or os.getenv("FRONTEND_CANCEL_URL", "http://localhost:3000/cancel")
-
-    if not price_id:
-        raise HTTPException(status_code=400, detail="Missing price_id")
+    plan = payload.get("plan", "pro")
+    success_url = payload.get("success_url") or os.getenv("FRONTEND_SUCCESS_URL", "http://localhost:3000/billing/success")
 
     try:
-        session = stripe.checkout.Session.create(
-            payment_method_types=["card"],
-            mode="subscription",
-            line_items=[{"price": price_id, "quantity": 1}],
-            success_url=success_url,
-            cancel_url=cancel_url,
-        )
-        # stripe.checkout.Session.create returns an object-like mapping
-        session_url = getattr(session, "url", None) or session.get("url")
-        session_id = getattr(session, "id", None) or session.get("id")
-        return {"id": session_id, "url": session_url}
-
+        current_user.plan = plan
+        current_user.subscription_status = "active"
+        db.commit()
+        return {"id": "free_upgrade", "url": success_url}
     except Exception as exc:
-        # Bubble up Stripe errors as 500
         raise HTTPException(status_code=500, detail=str(exc))
 
 
 @router.post("/webhook")
-async def webhook(request: Request):
-    """Verify webhook signature and return 200 if valid.
-
-    This endpoint verifies Stripe signature using STRIPE_WEBHOOK_SECRET.
-    """
+async def webhook(request: Request, db: Session = Depends(get_db)):
     if stripe is None:
         raise HTTPException(status_code=500, detail="Stripe library not available")
 
@@ -75,20 +56,50 @@ async def webhook(request: Request):
         payload = payload_bytes
 
     sig_header = request.headers.get("stripe-signature", "")
-    webhook_secret = STRIPE_WEBHOOK_SECRET
+    webhook_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
     if not webhook_secret:
         raise HTTPException(status_code=500, detail="Stripe webhook secret not configured")
 
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, webhook_secret)
     except Exception:
-        # Could be ValueError (invalid payload) or SignatureVerificationError
         raise HTTPException(status_code=400, detail="Invalid payload or signature")
 
-    # Minimal event handling - extend as needed
     etype = event.get("type") if isinstance(event, dict) else getattr(event, "type", None)
+    data_obj = event.get("data", {}).get("object", {}) if isinstance(event, dict) else event.data.object
+
     if etype == "checkout.session.completed":
-        # session = event["data"]["object"]  # implement fulfillment if needed
-        pass
+        user_id = data_obj.get("metadata", {}).get("user_id")
+        plan = data_obj.get("metadata", {}).get("plan", "pro")
+        subscription_id = data_obj.get("subscription")
+        customer_id = data_obj.get("customer")
+        if user_id:
+            user = db.query(User).filter(User.id == int(user_id)).first()
+            if user:
+                user.plan = plan
+                user.subscription_status = "active"
+                user.stripe_subscription_id = subscription_id
+                if customer_id:
+                    user.stripe_customer_id = customer_id
+                db.commit()
+
+    elif etype == "customer.subscription.deleted":
+        sub_id = data_obj.get("id")
+        user = db.query(User).filter(User.stripe_subscription_id == sub_id).first()
+        if user:
+            user.plan = "free"
+            user.subscription_status = "canceled"
+            user.stripe_subscription_id = None
+            db.commit()
+
+    elif etype == "customer.subscription.updated":
+        sub_id = data_obj.get("id")
+        status = data_obj.get("status")
+        user = db.query(User).filter(User.stripe_subscription_id == sub_id).first()
+        if user:
+            user.subscription_status = status
+            if status in ("canceled", "unpaid", "past_due"):
+                user.plan = "free"
+            db.commit()
 
     return JSONResponse(status_code=200, content={"received": True})

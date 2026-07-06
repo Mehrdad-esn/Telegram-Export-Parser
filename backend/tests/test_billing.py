@@ -1,8 +1,6 @@
 import os
 from fastapi.testclient import TestClient
 
-# Ensure test env is configured before importing the app
-os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
 os.environ.setdefault("STRIPE_WEBHOOK_SECRET", "whsec_test")
 
 from backend.app.main import app

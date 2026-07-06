@@ -205,6 +205,36 @@ class ExcelExporter(BaseExporter):
         wb.save(output_path)
 
 
+class TXTExporter(BaseExporter):
+    """Export to plain text format with reply context."""
+
+    def export(self, output_path: Path) -> None:
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write("Telegram Chat Export\n")
+            f.write("=" * 50 + "\n\n")
+            for message in self.messages:
+                record = self._format_message_record(message)
+                ts = record["timestamp"]
+                sender = record["sender"]
+                text = record["text"]
+                reply_id = record.get("reply_to_id", "")
+
+                f.write(f"[{ts}] {sender}\n")
+
+                if reply_id and reply_id in self.id_index:
+                    parent = self.id_index[reply_id]
+                    parent_sender = extract_sender_name(parent)
+                    parent_text = extract_plain_text(parent.get("text")).strip()
+                    if not parent_text:
+                        parent_text = "[media]"
+                    if len(parent_text) > 80:
+                        parent_text = parent_text[:80] + "..."
+                    f.write(f"  \u21b3 {parent_sender}: {parent_text}\n")
+
+                f.write(f"{text or '[media]'}\n")
+                f.write("-" * 40 + "\n\n")
+
+
 def get_exporter(format_type: str) -> type:
     """Get exporter class by format name."""
     exporters = {
@@ -212,6 +242,7 @@ def get_exporter(format_type: str) -> type:
         "json": JSONExporter,
         "html": HTMLExporter,
         "md": MarkdownExporter,
+        "txt": TXTExporter,
         "excel": ExcelExporter,
         "xlsx": ExcelExporter,
     }

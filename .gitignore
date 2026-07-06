@@ -30,6 +30,11 @@ examples_output/
 # System
 .DS_Store
 
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
 # Environment & Secrets
 .env
 .env.local

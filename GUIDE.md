@@ -41,23 +41,26 @@ docker-compose up --build
 ```
 root/
 ├── frontend/              # Next.js/TypeScript app (Port 3000)
-│   ├── pages/            # Next.js pages/routes
-│   ├── components/       # React components
-│   ├── styles/           # Tailwind CSS
-│   ├── package.json
-│   └── tsconfig.json
+│   ├── pages/            # Next.js pages/routes (index, dashboard, auth, pricing)
+│   ├── components/       # UI components & Recharts widgets
+│   ├── styles/           # Tailwind CSS configuration
+│   └── package.json      # Node.js dependencies
 │
 ├── backend/              # FastAPI app (Port 8000)
 │   ├── app/
-│   │   ├── main.py      # Entry point
-│   │   ├── routers/     # API endpoints
-│   │   ├── models/      # Pydantic models
-│   │   └── services/    # Business logic
-│   ├── tests/           # pytest test files
-│   ├── requirements.txt
-│   └── Dockerfile
+│   │   ├── main.py      # Entry point & CORS/Metrics Middleware
+│   │   ├── auth.py      # JWT registration and login logic
+│   │   ├── billing.py   # Stripe sessions & webhooks
+│   │   ├── db.py        # SQLAlchemy SQLite engine
+│   │   ├── models.py    # Database models (User schema)
+│   │   ├── monitoring.py# Sentry & Prometheus integrations
+│   │   ├── processor.py # Parse wrapper with usage checks
+│   │   └── routers/     # API routers (web_ui uploads, exports)
+│   ├── tests/           # Pytest unit tests
+│   ├── requirements.txt # Python dependencies
+│   └── Dockerfile       # Container setup
 │
-└── docker-compose.yml   # Local dev orchestration
+└── docker-compose.yml   # Local stack orchestration
 ```
 
 ### 2. Making Changes
@@ -821,4 +824,4 @@ with open('metrics.log', 'a') as f:
 
 **Version:** 2.1.0  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2024
+**Last Updated:** June 2026

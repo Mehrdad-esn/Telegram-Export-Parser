@@ -1,32 +1,48 @@
 # Frontend (Next.js + TypeScript + TailwindCSS)
 
-This directory contains a Next.js (TypeScript) frontend scaffold for the Telegram Export Parser project.
+This directory contains the Next.js (TypeScript) frontend for the Telegram Export Parser project, designed with a premium dark-mode-first aesthetic, dynamic Framer Motion animations, and responsive layout.
 
-Quick start:
+## 🚀 Quick Start
 
-1. cd frontend
-2. npm install
-3. npm run dev
+1. Install dependencies:
+   ```bash
+   cd frontend
+   npm install
+   ```
+2. Start the development server:
+   ```bash
+   npm run dev
+   ```
+   The application will run on `http://localhost:3000`.
 
-Build and run production:
+## 🏗️ Production Build
 
-1. npm run build
-2. npm start
+1. Build the production bundle:
+   ```bash
+   npm run build
+   ```
+2. Run the production server:
+   ```bash
+   npm start
+   ```
 
-Linting:
+## 🛠️ Code Structure
 
-- A basic ESLint setup is recommended. The project includes a lint script (uses `next lint`).
+- `pages/index.tsx`: Premium landing page highlighting local data safety and visual showcases.
+- `pages/auth/`: User registration and login forms with security feedback.
+- `pages/pricing.tsx`: SaaS tier details integrated with Stripe billing details.
+- `pages/dashboard/index.tsx`: Active processing panel featuring file drag-and-drop, real-time analytics graphs (using Recharts), top talkers distribution, and multi-format exporters.
+- `styles/`: Core styling containing Tailwind configurations and custom glassmorphism panels.
 
-Recommended devDependencies to install when you run `npm install`:
+## 🔗 Backend Integration
 
-- next
-- react
-- react-dom
-- typescript
-- tailwindcss
-- postcss
-- autoprefixer
-- eslint
-- eslint-config-next
+Next.js is configured with proxy rewrites (in `next.config.js`) to route `/api/:path*` requests directly to the FastAPI backend service at `http://localhost:8000/api/:path*`.
+- File upload endpoint: POST `/api/web/upload`
+- Stats endpoint: GET `/api/web/stats/{upload_id}/{chat_index}`
+- Export endpoint: POST `/api/web/export/{upload_id}`
+- Download endpoint: GET `/api/web/download/{upload_id}/{filename}`
 
-This scaffold provides sample login/signup pages and a dashboard with an upload form that POSTs to `/api/upload` (placeholder). Connect these endpoints to your Python backend when ready.
+## 🧪 Linting & Testing
+
+- Run linter: `npm run lint` (using ESLint configured in `next.config.js`)
+- Run tests: `npm run test`

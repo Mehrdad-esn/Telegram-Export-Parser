@@ -3,136 +3,32 @@
 
 import argparse
 import json
-import re
 import sys
 from pathlib import Path
 from typing import Any, Dict, Iterable, Iterator, List, Optional
 
 try:
     import ijson  # type: ignore
-
     HAS_IJSON = True
 except Exception:
     HAS_IJSON = False
 
 try:
     from tqdm import tqdm  # type: ignore
-
     HAS_TQDM = True
 except Exception:
     HAS_TQDM = False
 
-
-# ----------------------------
-# Helper Functions
-# ----------------------------
-
-
-def slugify(value: str, default: str = "chat") -> str:
-    value = value.strip().lower()
-    value = re.sub(r"[^\w\s-]", "", value, flags=re.UNICODE)
-    value = re.sub(r"[\s_-]+", "-", value).strip("-")
-    return value or default
-
-
-def ensure_dir(path: Path) -> None:
-    path.mkdir(parents=True, exist_ok=True)
-
-
-def unique_output_path(path: Path) -> Path:
-    if not path.exists():
-        return path
-    stem = path.stem
-    suffix = path.suffix
-    parent = path.parent
-    counter = 2
-    while True:
-        candidate = parent / f"{stem}-{counter}{suffix}"
-        if not candidate.exists():
-            return candidate
-        counter += 1
-
-
-def coerce_to_str(value: Any) -> str:
-    if value is None:
-        return ""
-    if isinstance(value, str):
-        return value
-    if isinstance(value, (int, float, bool)):
-        return str(value)
-    if isinstance(value, dict):
-        for key in ("id", "user_id", "message_id", "value", "name", "title", "text"):
-            if key in value:
-                res = coerce_to_str(value.get(key))
-                if res:
-                    return res
-        return ""
-    if isinstance(value, list):
-        items = [coerce_to_str(v) for v in value if coerce_to_str(v)]
-        return " ".join(items).strip()
-    return str(value)
-
-
-def extract_plain_text(text_field: Any) -> str:
-    parts: List[str] = []
-
-    def walk(node: Any) -> None:
-        if node is None:
-            return
-        if isinstance(node, str):
-            parts.append(node)
-            return
-        if isinstance(node, (int, float, bool)):
-            parts.append(str(node))
-            return
-        if isinstance(node, list):
-            for item in node:
-                walk(item)
-            return
-        if isinstance(node, dict):
-            if "text" in node:
-                walk(node.get("text"))
-                return
-            for key in ("content", "value", "message", "caption"):
-                if key in node:
-                    walk(node.get(key))
-                    return
-            return
-        parts.append(str(node))
-
-    walk(text_field)
-    text = "".join(parts)
-    text = text.replace("\r\n", "\n").replace("\r", "\n")
-    return text.strip()
-
-
-def extract_sender_name(message: Dict[str, Any]) -> str:
-    name = coerce_to_str(
-        message.get("from") or message.get("actor") or message.get("author")
-    )
-    return name if name else "Unknown"
-
-
-def extract_reply_id(message: Dict[str, Any]) -> Optional[str]:
-    value = message.get("reply_to_message_id")
-    if value in (None, ""):
-        return None
-    return coerce_to_str(value)
-
-
-def is_media_message(message: Dict[str, Any]) -> bool:
-    media_keys = {
-        "photo",
-        "video",
-        "sticker",
-        "file",
-        "document",
-        "audio",
-        "voice",
-        "animation",
-        "media_type",
-    }
-    return any(key in message and message.get(key) for key in media_keys)
+from utils import (
+    coerce_to_str,
+    slugify,
+    ensure_dir,
+    unique_output_path,
+    extract_plain_text,
+    extract_sender_name,
+    extract_reply_id,
+    is_media_message,
+)
 
 
 # ----------------------------
@@ -156,11 +52,10 @@ def format_message(message: Dict[str, Any], id_index: Dict[str, Dict[str, Any]])
 
             if not parent_text:
                 parent_text = "[رسانه]"
-
             if len(parent_text) > 80:
                 parent_text = parent_text[:80] + "..."
 
-            lines.append(f"↳ {parent_sender}: {parent_text}")
+            lines.append(f"\u21b3 {parent_sender}: {parent_text}")
 
     if text:
         lines.append(text)
@@ -188,7 +83,6 @@ def iter_chats(json_path: Path) -> Iterator[Dict[str, Any]]:
             if found_in_list:
                 return
 
-            # اگر در لیست نبود، یعنی خروجی مربوط به یک چت تکی است
             with json_path.open("rb") as f:
                 for root_obj in ijson.items(f, ""):
                     if isinstance(root_obj, dict) and "messages" in root_obj:
@@ -239,7 +133,6 @@ def process_chat(chat: Dict[str, Any], output_dir: Path) -> None:
         for message in iterator:
             if not isinstance(message, dict):
                 continue
-
             if message.get("type") != "message":
                 continue
 

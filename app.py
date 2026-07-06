@@ -6,7 +6,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict, Iterable, Iterator, List, Optional
+from typing import Any, Dict, Iterator, List, Optional
 
 try:
     import ijson  # type: ignore
@@ -14,13 +14,6 @@ try:
     HAS_IJSON = True
 except Exception:
     HAS_IJSON = False
-
-try:
-    from tqdm import tqdm  # type: ignore
-
-    HAS_TQDM = True
-except Exception:
-    HAS_TQDM = False
 
 from utils import (
     coerce_to_str,
@@ -34,24 +27,9 @@ from filters import MessageFilter
 from exporters import get_exporter
 
 import logging
-import builtins
 
-# Configure logging for CLI
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
 logger = logging.getLogger("telegram_export_parser")
-
-
-# Redirect prints to logger.info for consistent logging
-def _print_to_logger(*args, **kwargs):
-    sep = kwargs.get("sep", " ")
-    end = kwargs.get("end", "\n")
-    msg = sep.join(map(str, args))
-    if end != "\n":
-        msg += end
-    logger.info(msg)
-
-
-builtins.print = _print_to_logger
 
 
 # ----------------------------
@@ -102,52 +80,6 @@ def build_id_index(messages: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
     return index
 
 
-def format_message_with_reply(
-    message: Dict[str, Any], id_index: Dict[str, Dict[str, Any]]
-) -> str:
-    """Format message with reply context (plain text format)."""
-    timestamp = message.get("date", "").replace("T", " ")
-    sender = extract_sender_name(message)
-    text = extract_plain_text(message.get("text")).strip()
-
-    lines = [f"[{timestamp}] {sender}"]
-
-    reply_id = message.get("reply_to_message_id")
-    if reply_id:
-        parent = id_index.get(str(reply_id))
-        if parent:
-            parent_sender = extract_sender_name(parent)
-            parent_text = extract_plain_text(parent.get("text")).strip()
-
-            if not parent_text:
-                parent_text = "[رسانه]"
-
-            if len(parent_text) > 80:
-                parent_text = parent_text[:80] + "..."
-
-            lines.append(f"↳ {parent_sender}: {parent_text}")
-
-    media_keys = {
-        "photo",
-        "video",
-        "sticker",
-        "file",
-        "document",
-        "audio",
-        "voice",
-        "animation",
-        "media_type",
-    }
-    has_media = any(key in message and message.get(key) for key in media_keys)
-
-    if text:
-        lines.append(text)
-    elif has_media:
-        lines.append("[رسانه]")
-
-    return "\n".join(lines)
-
-
 def list_chat_names(json_path: Path) -> List[str]:
     """List all available chat names."""
     names = []
@@ -186,43 +118,20 @@ def process_chat(
         return
 
     # Export messages
-    if export_format == "txt":
-        txt_path = unique_output_path(
-            output_dir / f"{coerce_to_str(chat.get('name') or 'chat')}.txt"
-        )
+    from utils import extract_timestamp
 
-        iterator: Iterable[Dict[str, Any]] = messages
-        if HAS_TQDM and len(messages) >= 200:
-            iterator = tqdm(messages, desc=f"Processing {chat_name}", unit="msg")
+    exporter_class = get_exporter(export_format)
+    exporter = exporter_class(chat.get("messages", []), id_index)
 
-        with txt_path.open("w", encoding="utf-8") as out_file:
-            for message in iterator:
-                if not isinstance(message, dict):
-                    continue
-                formatted_msg = format_message_with_reply(message, id_index)
-                out_file.write(formatted_msg)
-                out_file.write("\n\n")
+    file_ext = "xlsx" if export_format in ["excel", "xlsx"] else export_format
+    output_path = unique_output_path(
+        output_dir / f"{coerce_to_str(chat.get('name') or 'chat')}.{file_ext}"
+    )
 
-        print(f"✅ Chat '{chat_name}' exported!")
-        print(f"  ➜ Format: TXT ({len(messages)} messages)")
-        print(f"  ➜ Output: {txt_path}\n")
-
-    else:
-        # Use exporters module
-        from utils import extract_timestamp
-
-        exporter_class = get_exporter(export_format)
-        exporter = exporter_class(chat.get("messages", []), id_index)
-
-        file_ext = "xlsx" if export_format in ["excel", "xlsx"] else export_format
-        output_path = unique_output_path(
-            output_dir / f"{coerce_to_str(chat.get('name') or 'chat')}.{file_ext}"
-        )
-
-        exporter.export(output_path)
-        print(f"✅ Chat '{chat_name}' exported!")
-        print(f"  ➜ Format: {export_format.upper()} ({len(messages)} messages)")
-        print(f"  ➜ Output: {output_path}\n")
+    exporter.export(output_path)
+    print(f"✅ Chat '{chat_name}' exported!")
+    print(f"  ➜ Format: {export_format.upper()} ({len(messages)} messages)")
+    print(f"  ➜ Output: {output_path}\n")
 
     # Print statistics if requested
     if stats:

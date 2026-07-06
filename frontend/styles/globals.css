@@ -2,7 +2,61 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Basic defaults */
-body {
-  @apply bg-white text-gray-900;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Vazirmatn:wght@400;500;600;700;800&display=swap');
+
+@layer base {
+  html {
+    direction: rtl;
+  }
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased selection:bg-primary-500 selection:text-white dark:bg-dark-900 dark:text-slate-100;
+    font-family: 'Vazirmatn', 'Inter', system-ui, -apple-system, sans-serif;
+  }
+  [dir="ltr"], .ltr {
+    direction: ltr;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-xl shadow-slate-200/50 dark:bg-dark-800/70 dark:border-dark-700/50 dark:shadow-none rounded-2xl;
+  }
+  
+  .glass-card {
+    @apply bg-white/50 backdrop-blur-sm border border-white/20 shadow-lg shadow-slate-200/30 hover:shadow-xl hover:bg-white/80 transition-all duration-300 dark:bg-dark-800/50 dark:border-dark-700/50 dark:hover:bg-dark-700/80 rounded-xl;
+  }
+  
+  .btn-primary {
+    @apply px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-500 text-white rounded-xl font-medium shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
+  }
+  
+  .btn-secondary {
+    @apply px-6 py-3 bg-white text-slate-700 border border-slate-200 rounded-xl font-medium shadow-sm hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98] transition-all duration-200 dark:bg-dark-800 dark:text-slate-200 dark:border-dark-700 dark:hover:bg-dark-700;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all dark:bg-dark-800/50 dark:border-dark-700 dark:focus:border-primary-500 dark:text-white;
+  }
+
+  .gradient-text {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-indigo-400;
+  }
+
+  .section-title {
+    @apply text-3xl md:text-4xl font-bold text-white mb-4;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 rounded-full dark:bg-slate-600;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-400 dark:bg-slate-500;
 }

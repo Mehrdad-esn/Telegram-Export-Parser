@@ -12,21 +12,17 @@ from sqlalchemy.orm import sessionmaker
 backend_root = Path(__file__).resolve().parents[1]
 repo_root = backend_root.parent
 
-# Setup test database
-TEST_DB_PATH = Path(tempfile.gettempdir()) / "test_telegram_export.db"
-SQLALCHEMY_DATABASE_URL = f"sqlite:///{TEST_DB_PATH}"
+# Set test database URL before any imports
+os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
+os.environ.setdefault("SECRET_KEY", "test-secret-key")
 
 
 @pytest.fixture(scope="session")
 def test_db():
     """Create test database."""
-    # Ensure database is created
     from backend.app.db import Base, engine
     Base.metadata.create_all(bind=engine)
     yield
-    # Cleanup
-    if TEST_DB_PATH.exists():
-        TEST_DB_PATH.unlink()
 
 
 @pytest.fixture
