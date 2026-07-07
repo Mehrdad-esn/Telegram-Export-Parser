@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Filter, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface FilterPanelProps {
   availableSenders: string[];
@@ -18,6 +19,7 @@ export default function FilterPanel({ availableSenders, onApply, onClear, active
   const [minLength, setMinLength] = useState('');
   const [maxLength, setMaxLength] = useState('');
   const [hasMedia, setHasMedia] = useState<string>('');
+  const { t } = useTranslation();
 
   const handleApply = () => {
     const filters: Record<string, unknown> = {};
@@ -64,14 +66,14 @@ export default function FilterPanel({ availableSenders, onApply, onClear, active
         }`}
       >
         <Filter className="w-4 h-4" />
-        فیلتر پیام‌ها
+        {t('filter.button')}
         {active && <span className="w-2 h-2 rounded-full bg-primary-400" />}
       </button>
 
       {open && (
-        <div className="absolute top-full mt-2 right-0 z-50 w-80 glass-panel p-5 space-y-4 shadow-2xl">
+        <div className="absolute top-full mt-2 left-0 right-0 md:left-auto md:right-0 z-50 w-80 glass-panel p-5 space-y-4 shadow-2xl">
           <div className="flex items-center justify-between">
-            <h4 className="font-bold text-white">فیلترها</h4>
+            <h4 className="font-bold text-white">{t('filter.title')}</h4>
             <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-white">
               <X className="w-4 h-4" />
             </button>
@@ -79,48 +81,48 @@ export default function FilterPanel({ availableSenders, onApply, onClear, active
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-slate-400 mb-1 block">از تاریخ</label>
+              <label className="text-xs text-slate-400 mb-1 block">{t('filter.startDate')}</label>
               <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="input-field text-sm py-2" />
             </div>
             <div>
-              <label className="text-xs text-slate-400 mb-1 block">تا تاریخ</label>
+              <label className="text-xs text-slate-400 mb-1 block">{t('filter.endDate')}</label>
               <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="input-field text-sm py-2" />
             </div>
           </div>
 
           <div>
-            <label className="text-xs text-slate-400 mb-1 block">کلمات کلیدی (با , جدا)</label>
-            <input type="text" value={keywords} onChange={e => setKeywords(e.target.value)} placeholder="سلام, پروژه" className="input-field text-sm py-2" />
+            <label className="text-xs text-slate-400 mb-1 block">{t('filter.keywords')}</label>
+            <input type="text" value={keywords} onChange={e => setKeywords(e.target.value)} placeholder={t('filter.keywordsPlaceholder')} className="input-field text-sm py-2" />
           </div>
 
           <div>
-            <label className="text-xs text-slate-400 mb-1 block">Regex</label>
-            <input type="text" value={regex} onChange={e => setRegex(e.target.value)} placeholder="pattern" className="input-field text-sm py-2 font-mono" dir="ltr" />
+            <label className="text-xs text-slate-400 mb-1 block">{t('filter.regex')}</label>
+            <input type="text" value={regex} onChange={e => setRegex(e.target.value)} placeholder={t('filter.regexPlaceholder')} className="input-field text-sm py-2 font-mono" dir="ltr" />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-slate-400 mb-1 block">حداقل طول</label>
+              <label className="text-xs text-slate-400 mb-1 block">{t('filter.minLength')}</label>
               <input type="number" value={minLength} onChange={e => setMinLength(e.target.value)} className="input-field text-sm py-2" />
             </div>
             <div>
-              <label className="text-xs text-slate-400 mb-1 block">حداکثر طول</label>
+              <label className="text-xs text-slate-400 mb-1 block">{t('filter.maxLength')}</label>
               <input type="number" value={maxLength} onChange={e => setMaxLength(e.target.value)} className="input-field text-sm py-2" />
             </div>
           </div>
 
           <div>
-            <label className="text-xs text-slate-400 mb-1 block">رسانه</label>
+            <label className="text-xs text-slate-400 mb-1 block">{t('filter.media')}</label>
             <select value={hasMedia} onChange={e => setHasMedia(e.target.value)} className="input-field text-sm py-2">
-              <option value="">همه</option>
-              <option value="yes">فقط با رسانه</option>
-              <option value="no">بدون رسانه</option>
+              <option value="">{t('filter.mediaAll')}</option>
+              <option value="yes">{t('filter.mediaWith')}</option>
+              <option value="no">{t('filter.mediaWithout')}</option>
             </select>
           </div>
 
           {availableSenders.length > 0 && (
             <div>
-              <label className="text-xs text-slate-400 mb-2 block">فرستنده</label>
+              <label className="text-xs text-slate-400 mb-2 block">{t('filter.sender')}</label>
               <div className="max-h-32 overflow-y-auto space-y-1">
                 {availableSenders.slice(0, 20).map(sender => (
                   <label key={sender} className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer hover:text-white">
@@ -138,8 +140,8 @@ export default function FilterPanel({ availableSenders, onApply, onClear, active
           )}
 
           <div className="flex gap-2 pt-2">
-            <button onClick={handleApply} className="btn-primary flex-1 py-2 text-sm">اعمال</button>
-            <button onClick={handleClear} className="btn-secondary flex-1 py-2 text-sm">پاک کردن</button>
+            <button onClick={handleApply} className="btn-primary flex-1 py-2 text-sm">{t('filter.apply')}</button>
+            <button onClick={handleClear} className="btn-secondary flex-1 py-2 text-sm">{t('filter.clear')}</button>
           </div>
         </div>
       )}

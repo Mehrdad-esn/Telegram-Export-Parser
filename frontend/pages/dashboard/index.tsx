@@ -7,9 +7,18 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsToolti
 import { ProtectedRoute, useAuth } from '../../context/AuthContext'
 import { apiFetch } from '../../lib/api'
 import FilterPanel from '../../components/FilterPanel'
+import { useTranslation } from 'react-i18next'
+
+function formatNumber(n: number | string, locale: string): string {
+  const num = typeof n === 'string' ? parseInt(n, 10) : n
+  if (isNaN(num)) return String(n)
+  return new Intl.NumberFormat(locale === 'fa' ? 'fa-IR' : 'en-US').format(num)
+}
 
 function DashboardContent() {
   const { user } = useAuth()
+  const { t, i18n } = useTranslation()
+  const locale = i18n.language
   const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
   const [uploadId, setUploadId] = useState('')
@@ -28,7 +37,7 @@ function DashboardContent() {
 
   const uploadFile = async (file: File) => {
     if (!file.name.endsWith('.json')) {
-      setErrorMsg('لطفاً یک فایل JSON معتبر export تلگرام آپلود کنید.')
+      setErrorMsg(t('dashboard.uploadError'))
       setUploadState('error')
       return
     }
@@ -42,7 +51,7 @@ function DashboardContent() {
     try {
       const res = await apiFetch('/api/web/upload', { method: 'POST', body: formData })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.detail || 'آپلود ناموفق')
+      if (!res.ok) throw new Error(data.detail || t('dashboard.uploadFailed'))
 
       setUploadId(data.upload_id)
       setChats(data.chats)
@@ -131,7 +140,7 @@ function DashboardContent() {
 
   return (
     <>
-      <Head><title>داشبورد | Telegram Parser</title></Head>
+      <Head><title>{t('dashboard.title')}</title></Head>
 
       <div className="w-full">
         {/* Guest alert banner */}
@@ -142,18 +151,18 @@ function DashboardContent() {
                 <AlertCircle className="w-4 h-4" />
               </div>
               <div className="text-right">
-                <span className="text-slate-300 font-medium block sm:inline">شما به عنوان کاربر مهمان وارد شده‌اید.</span>
-                <span className="text-slate-400 sm:mr-2">برای ثبت تاریخچه تحلیل‌ها و افزایش محدودیت‌ها می‌توانید ثبت‌نام کنید یا وارد حساب خود شوید.</span>
+                <span className="text-slate-300 font-medium block sm:inline">{t('dashboard.guestAlert')}</span>
+                <span className="text-slate-400 sm:mr-2">{t('dashboard.guestDesc')}</span>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Link href="/auth/login" className="text-slate-300 hover:text-white transition-colors">ورود</Link>
-              <Link href="/auth/signup" className="btn-primary py-1.5 px-4 text-xs">ثبت‌نام رایگان</Link>
+              <Link href="/auth/login" className="text-slate-300 hover:text-white transition-colors">{t('dashboard.guestLogin')}</Link>
+              <Link href="/auth/signup" className="btn-primary py-1.5 px-4 text-xs">{t('dashboard.guestSignup')}</Link>
               {uploadState === 'success' && (
                 <>
                   <span className="text-slate-600">|</span>
                   <button onClick={resetUpload} className="flex items-center gap-2 text-primary-400 hover:text-primary-300 transition-colors">
-                    <RefreshCw className="w-4 h-4" /> آپلود جدید
+                    <RefreshCw className="w-4 h-4" /> {t('dashboard.newUpload')}
                   </button>
                 </>
               )}
@@ -165,18 +174,18 @@ function DashboardContent() {
         {user?.usage && (
           <div className="glass-panel px-6 py-3 mb-6 flex flex-wrap items-center justify-between gap-4 text-sm">
             <div className="flex items-center gap-4">
-              <span className="text-slate-400">پلن: <strong className="text-primary-300">{user.usage.plan_name}</strong></span>
+              <span className="text-slate-400">{t('dashboard.plan')}: <strong className="text-primary-300">{locale === 'en' ? user.usage.plan_name_en : user.usage.plan_name}</strong></span>
               <span className="text-slate-500">|</span>
               <span className="text-slate-400">
-                آپلود: {user.usage.uploads_used}/{user.usage.uploads_limit ?? '∞'}
+                {t('dashboard.upload')}: {formatNumber(user.usage.uploads_used, locale)}/{user.usage.uploads_limit ?? '∞'}
               </span>
               <span className="text-slate-400">
-                خروجی: {user.usage.exports_used}/{user.usage.exports_limit ?? '∞'}
+                {t('dashboard.export')}: {formatNumber(user.usage.exports_used, locale)}/{user.usage.exports_limit ?? '∞'}
               </span>
             </div>
             {uploadState === 'success' && (
               <button onClick={resetUpload} className="flex items-center gap-2 text-primary-400 hover:text-primary-300 transition-colors">
-                <RefreshCw className="w-4 h-4" /> آپلود جدید
+                <RefreshCw className="w-4 h-4" /> {t('dashboard.newUpload')}
               </button>
             )}
           </div>
@@ -185,8 +194,8 @@ function DashboardContent() {
         {uploadState !== 'success' ? (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl mx-auto mt-8">
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold text-white">آپلود فایل Export</h1>
-              <p className="text-slate-400 mt-2">فایل result.json از Telegram Desktop را انتخاب کنید</p>
+              <h1 className="text-3xl font-bold text-white">{t('dashboard.uploadTitle')}</h1>
+              <p className="text-slate-400 mt-2">{t('dashboard.uploadDesc')}</p>
             </div>
 
             <div
@@ -203,14 +212,14 @@ function DashboardContent() {
               {uploadState === 'uploading' ? (
                 <div className="flex flex-col items-center">
                   <Loader2 className="w-16 h-16 text-primary-400 animate-spin mb-4" />
-                  <p className="text-lg font-medium text-primary-300">در حال آپلود و پردازش...</p>
-                  <p className="text-sm text-slate-500 mt-2">برای فایل‌های بزرگ ممکن است چند لحظه طول بکشد</p>
+                  <p className="text-lg font-medium text-primary-300">{t('dashboard.uploading')}</p>
+                  <p className="text-sm text-slate-500 mt-2">{t('dashboard.uploadingHint')}</p>
                 </div>
               ) : (
                 <div className="flex flex-col items-center">
                   <UploadCloud className={`w-16 h-16 mb-4 ${uploadState === 'error' ? 'text-red-400' : 'text-slate-500'}`} />
-                  <p className="text-xl font-medium text-slate-200">کلیک کنید یا فایل را بکشید</p>
-                  <p className="text-sm text-slate-500 mt-2">فقط JSON — حداکثر {user?.usage?.max_file_size_mb ?? 10240}MB</p>
+                  <p className="text-xl font-medium text-slate-200">{t('dashboard.dropzone')}</p>
+                  <p className="text-sm text-slate-500 mt-2">{t('dashboard.dropzoneHint', { size: user?.usage?.max_file_size_mb ?? 10240 })}</p>
                 </div>
               )}
             </div>
@@ -227,7 +236,7 @@ function DashboardContent() {
             {/* Chat sidebar */}
             <div className="lg:col-span-4 glass-panel flex flex-col h-[80vh] overflow-hidden">
               <div className="p-5 border-b border-slate-700/50 flex items-center justify-between">
-                <h2 className="text-lg font-bold text-white">چت‌ها</h2>
+                <h2 className="text-lg font-bold text-white">{t('dashboard.chats')}</h2>
                 <span className="px-3 py-1 bg-primary-500/20 text-primary-300 rounded-full text-xs font-semibold">{chats.length}</span>
               </div>
               <div className="flex-1 overflow-y-auto p-3 space-y-2">
@@ -244,7 +253,7 @@ function DashboardContent() {
                     <div className="font-semibold text-white truncate">{chat.name}</div>
                     <div className="text-sm text-slate-400 mt-1 flex items-center gap-1">
                       <MessageSquare className="w-3 h-3" />
-                      {chat.message_count.toLocaleString('fa-IR')} پیام
+                      {formatNumber(chat.message_count, locale)} {t('dashboard.messages')}
                     </div>
                   </button>
                 ))}
@@ -256,13 +265,13 @@ function DashboardContent() {
               {selectedChat === null ? (
                 <div className="flex-1 flex flex-col items-center justify-center text-slate-500 p-8 text-center">
                   <BarChart3 className="w-20 h-20 mb-4 opacity-30" />
-                  <h3 className="text-xl font-medium text-slate-300">یک چت انتخاب کنید</h3>
-                  <p className="mt-2 text-sm">آمار، نمودار و خروجی‌گیری از اینجا در دسترس است</p>
+                  <h3 className="text-xl font-medium text-slate-300">{t('dashboard.selectChat')}</h3>
+                  <p className="mt-2 text-sm">{t('dashboard.selectChatHint')}</p>
                 </div>
               ) : statsLoading ? (
                 <div className="flex-1 flex flex-col items-center justify-center">
                   <Loader2 className="w-12 h-12 text-primary-400 animate-spin mb-4" />
-                  <p className="text-slate-400">در حال محاسبه آمار...</p>
+                  <p className="text-slate-400">{t('dashboard.loadingStats')}</p>
                 </div>
               ) : stats ? (
                 <div className="flex-1 overflow-y-auto">
@@ -270,8 +279,8 @@ function DashboardContent() {
                     <div>
                       <h2 className="text-xl font-bold text-white">{chats[selectedChat].name}</h2>
                       <p className="text-slate-400 text-sm">
-                        {stats.filtered_messages?.toLocaleString('fa-IR') ?? stats.total_messages?.toLocaleString('fa-IR')} پیام
-                        {stats.filters_applied && ` (از ${stats.total_unfiltered?.toLocaleString('fa-IR')} کل)`}
+                        {formatNumber(stats.filtered_messages ?? stats.total_messages, locale)} {t('dashboard.messages')}
+                        {stats.filters_applied && ` ${t('dashboard.fromTotal', { count: formatNumber(stats.total_unfiltered, locale) })}`}
                       </p>
                     </div>
                     <div className="flex items-center gap-3 flex-wrap">
@@ -296,7 +305,7 @@ function DashboardContent() {
                         </select>
                         <button onClick={handleExport} disabled={isExporting} className="btn-primary py-2 px-4 text-sm flex items-center gap-2">
                           {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                          خروجی
+                          {t('dashboard.exportLabel')}
                         </button>
                       </div>
                     </div>
@@ -305,9 +314,9 @@ function DashboardContent() {
                   <div className="p-5 space-y-6">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       {[
-                        { label: 'کل پیام‌ها', value: stats.total_messages?.toLocaleString('fa-IR') },
-                        { label: 'میانگین روزانه', value: Math.round(stats.daily_avg || 0).toLocaleString('fa-IR') },
-                        { label: 'میانگین طول', value: `${stats.avg_message_length} کاراکتر` },
+                        { label: t('dashboard.totalMessages'), value: formatNumber(stats.total_messages, locale) },
+                        { label: t('dashboard.dailyAvg'), value: formatNumber(Math.round(stats.daily_avg || 0), locale) },
+                        { label: t('dashboard.avgLength'), value: `${stats.avg_message_length} ${t('dashboard.characters')}` },
                       ].map((m, i) => (
                         <div key={i} className="bg-slate-800/40 rounded-xl p-5 border border-slate-700/30">
                           <div className="text-slate-400 text-sm mb-1">{m.label}</div>
@@ -318,7 +327,7 @@ function DashboardContent() {
 
                     {stats.timeline?.length > 0 && (
                       <div className="bg-slate-800/30 rounded-xl p-5 border border-slate-700/30">
-                        <h3 className="text-lg font-bold text-white mb-4">نمودار فعالیت</h3>
+                        <h3 className="text-lg font-bold text-white mb-4">{t('dashboard.activityChart')}</h3>
                         <div className="h-56">
                           <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={stats.timeline}>
@@ -341,7 +350,7 @@ function DashboardContent() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <div className="bg-slate-800/30 rounded-xl p-5 border border-slate-700/30">
-                        <h3 className="text-lg font-bold text-white mb-4">فعال‌ترین اعضا</h3>
+                        <h3 className="text-lg font-bold text-white mb-4">{t('dashboard.topTalkers')}</h3>
                         {stats.top_talkers_chart?.length > 0 ? (
                           <>
                             <div className="h-48">
@@ -363,16 +372,16 @@ function DashboardContent() {
                                     <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[idx] }} />
                                     <span className="text-slate-300 truncate max-w-[140px]">{p.name}</span>
                                   </div>
-                                  <span className="font-semibold text-white">{p.count.toLocaleString('fa-IR')}</span>
+                                  <span className="font-semibold text-white">{formatNumber(p.count, locale)}</span>
                                 </div>
                               ))}
                             </div>
                           </>
-                        ) : <p className="text-slate-500 text-center py-8">داده‌ای موجود نیست</p>}
+                        ) : <p className="text-slate-500 text-center py-8">{t('dashboard.noData')}</p>}
                       </div>
 
                       <div className="bg-slate-800/30 rounded-xl p-5 border border-slate-700/30">
-                        <h3 className="text-lg font-bold text-white mb-4">پرتکرارترین کلمات</h3>
+                        <h3 className="text-lg font-bold text-white mb-4">{t('dashboard.topWords')}</h3>
                         <div className="space-y-3">
                           {Object.entries(stats.top_words || {}).slice(0, 8).map(([word, count]: any, idx: number) => {
                             const maxCount = Object.values(stats.top_words)[0] as number

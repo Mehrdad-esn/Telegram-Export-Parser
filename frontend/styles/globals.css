@@ -5,14 +5,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Vazirmatn:wght@400;500;600;700;800&display=swap');
 
 @layer base {
-  html {
-    direction: rtl;
-  }
   body {
     @apply bg-slate-50 text-slate-900 antialiased selection:bg-primary-500 selection:text-white dark:bg-dark-900 dark:text-slate-100;
-    font-family: 'Vazirmatn', 'Inter', system-ui, -apple-system, sans-serif;
   }
-  [dir="ltr"], .ltr {
+  html[dir="rtl"] body {
+    font-family: 'Vazirmatn', 'Inter', system-ui, -apple-system, sans-serif;
+    direction: rtl;
+  }
+  html[dir="ltr"] body {
+    font-family: 'Inter', 'Vazirmatn', system-ui, -apple-system, sans-serif;
     direction: ltr;
   }
 }
