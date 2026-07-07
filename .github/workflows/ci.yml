@@ -19,4 +19,4 @@ jobs:
           cd backend && pytest -q
       - name: Run root tests
         run: |
-          pytest -q test_data.json tests/ --ignore=backend/tests
+          pytest -q tests/ --ignore=backend/tests
