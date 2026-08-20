@@ -1,8 +1,25 @@
-# 🚀 Telegram Export Parser
+# 🤖 Telegram Export Parser
+
+> **A 100% AI-Generated, Vibe-Coded Project** 🎨⚡
 
 > Telegram chat export processor with multi-service architecture (frontend + backend + worker)
 
 **Convert Telegram exports (JSON) to multiple formats with advanced analysis, filtering, and visualization.**
+
+---
+
+## ⚠️ Important Disclosure: This Was Built by AI, Not Me
+
+Let's be completely honest here — **I had zero role in writing this code.** 🧘
+
+- 🧠 **Every single line of code in this repository was written by Artificial Intelligence** (AI coding assistants / LLMs).
+- 🎯 **This project is the result of pure "Vibe Coding"** — I described what I wanted in plain language, and the AI generated, fixed, and improved the entire codebase.
+- 🤝 You'll even see commits in the git history with `Co-authored-by: Copilot` — because that's literally what happened.
+- 💡 My only contributions were: **coming up with the idea**, **describing the requirements**, and **pressing "Run"**.
+
+So if you're looking at this repo thinking "wow, this person wrote all this?" — no. **A machine did.** And honestly, that's the whole point. This repo is a living example of what vibe coding with AI can produce in a short time.
+
+> 🛠️ **A note to recruiters / reviewers:** This project should be evaluated as a demonstration of **prompting, requirements-gathering, and working with AI tools** — not as handwritten software engineering.
 
 ---
 
@@ -213,7 +230,7 @@ cp .env.example .env
 ```
 
 | Variable | Description | Default |
-|---|---|---|---|
+|---|---|---|
 | `DATABASE_URL` | SQLAlchemy connection string | `sqlite:///./telegram_export.db` |
 | `SECRET_KEY` | JWT signing secret key | *Generate a strong key* |
 | `STRIPE_API_KEY` | Stripe secret key | *(Optional)* |
@@ -226,6 +243,22 @@ cp .env.example .env
 
 ---
 
+## 🧑‍💻 How This Was Built (Vibe Coding)
+
+Curious about the process? Here's the honest breakdown of how this repo came to life:
+
+1. 💭 **Idea** → "I want a tool that parses Telegram export files."
+2. 🗣️ **Prompt** → I described the features in plain language to an AI coding assistant.
+3. 🤖 **Generation** → The AI wrote the code, fixed errors, and iterated on the design.
+4. 🧪 **Testing** → I ran the commands the AI suggested and reported back any errors.
+5. 🔁 **Iteration** → Repeat until the thing actually works.
+
+That's it. No hand-written commits, no manual architecture design, no manual debugging marathons. Just me chatting with a machine and letting it do the heavy lifting.
+
+**If you have questions about the code, ask the AI that wrote it — it knows it better than I do.** 😄
+
+---
+
 **Version:** 2.0.0  
-**Status:** ✅ Development / Learning Project  
-**Last Updated:** June 2026  
+**Status:** ✅ Development / Learning / Vibe-Coding Project  
+**Last Updated:** June 2026
