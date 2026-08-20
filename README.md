@@ -255,7 +255,7 @@ Curious about the process? Here's the honest breakdown of how this repo came to 
 
 That's it. No hand-written commits, no manual architecture design, no manual debugging marathons. Just me chatting with a machine and letting it do the heavy lifting.
 
-**If you have questions about the code, ask the AI that wrote it — it knows it better than I do.** 😄
+**If you have questions about the code, ask the AI that wrote it — it knows it better than I do.** 
 
 ---
 
